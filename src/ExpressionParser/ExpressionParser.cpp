@@ -50,7 +50,7 @@ namespace ExpressionParser {
 	Variable::Variable(std::string val) noexcept : Token(std::move(val), Type::variable) {
 		try {
 			m_numericVal = std::stod(m_value);
-		} catch (std::exception const& ex) {
+		} catch (std::exception const&) {
 			m_numericVal = std::nullopt;
 		}
 	}

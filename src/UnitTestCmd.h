@@ -55,13 +55,13 @@ struct UnitTestCmd : public MPxCommand {
 
 #ifdef TEST_QT_GUI
 		if(qWinPtr.isNull()) {
-			qWinPtr = new TestQtWindow{ MQtUtil::mainWindow() };
+			qWinPtr = new TestWindow{ MQtUtil::mainWindow() };
 			qWinPtr->show();
 		} else {
 			qWinPtr->raise();
 		}
-#endif
 		return MStatus::kSuccess;
+#endif
 	}
 
 	static auto creator() -> void* {
@@ -75,7 +75,7 @@ struct UnitTestCmd : public MPxCommand {
 	}
 
 private:
-	static QPointer<TestQtWindow> qWinPtr;
+	static QPointer<TestWindow> qWinPtr;
 };
 
-QPointer<TestQtWindow> UnitTestCmd::qWinPtr;
+QPointer<TestWindow> UnitTestCmd::qWinPtr;

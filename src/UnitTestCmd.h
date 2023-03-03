@@ -1,9 +1,16 @@
 #pragma once
-#include <maya/MPxCommand.h>
+#include <QPointer>
 
+#include <maya/MPxCommand.h>
+#include <maya/MQtUtil.h>
+
+#include "CurveNode.h"
 #include "Phyllotaxis/Grammar.h"
 #include "Phyllotaxis/PlanarPhyllotaxisGrammar.h"
+#include "TestQt.h"
 
+
+#define TEST_QT_GUI
 struct UnitTestCmd : public MPxCommand {
 	virtual auto doIt(const MArgList& args) -> MStatus override {
 		Grammar::Turtle t;
@@ -44,10 +51,31 @@ struct UnitTestCmd : public MPxCommand {
 			ppg.process(50);
 		);
 #endif
+
+
+#ifdef TEST_QT_GUI
+		if(qWinPtr.isNull()) {
+			qWinPtr = new TestQtWindow{ MQtUtil::mainWindow() };
+			qWinPtr->show();
+		} else {
+			qWinPtr->raise();
+		}
+#endif
 		return MStatus::kSuccess;
 	}
 
 	static auto creator() -> void* {
 		return new UnitTestCmd;
 	}
+
+	static void cleanup() {
+		if(!qWinPtr.isNull()) {
+			delete qWinPtr;
+		}
+	}
+
+private:
+	static QPointer<TestQtWindow> qWinPtr;
 };
+
+QPointer<TestQtWindow> UnitTestCmd::qWinPtr;

@@ -22,7 +22,7 @@
 MStatus initializePlugin( MObject obj )
 {
     MStatus   status = MStatus::kSuccess;
-    MFnPlugin plugin( obj, "MyPlugin", "1.0", "Any");
+    MFnPlugin plugin( obj, "BlossomPro", "1.0", "Any");
 /*
 	char buffer[2048];
     int check = sprintf_s(buffer, 2048, "source \"%s/MyPluginDialog\";", plugin.loadPath().asChar());

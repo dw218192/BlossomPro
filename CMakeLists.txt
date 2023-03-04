@@ -10,7 +10,7 @@ project (${PROJECT_NAME} CXX)
 
 file(GLOB EXPRESSION_PARSER_SRCS "src/ExpressionParser/*.cpp")
 file(GLOB PHYLLOTAXIS_SRCS "src/Phyllotaxis/*.cpp" "src/Phyllotaxis/*.h")
-
+file(GLOB RESOURCE_FILES "res/*.qrc")
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -36,8 +36,15 @@ find_alembic()
 
 build_plugin()
 
-find_package(Qt5 REQUIRED COMPONENTS Widgets Gui Core)
+find_package(Qt5 REQUIRED COMPONENTS Widgets Gui OpenGL Core)
 
+# add resource files
+target_sources(${PROJECT_NAME}
+	PRIVATE 
+		${RESOURCE_FILES}
+)
+
+# add auto-generated source files
 target_include_directories(${PROJECT_NAME} 
 	PUBLIC
 		${AUTOGEN_BUILD_DIR}
@@ -51,4 +58,7 @@ endif ()
 # link our libs
 target_link_libraries (${PROJECT_NAME} PhyllotaxisGenerator)
 # link qt
-target_link_libraries (${PROJECT_NAME} Qt5::Widgets Qt5::Gui Qt5::Core)
+target_link_libraries (${PROJECT_NAME} Qt5::Widgets Qt5::Gui Qt5::OpenGL Qt5::Core)
+# link openGL
+find_package(OpenGL REQUIRED)
+target_link_libraries (${PROJECT_NAME} opengl32)

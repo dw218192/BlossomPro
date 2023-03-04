@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>TestWindow</class>
- <widget class="QDialog" name="TestWindow">
+ <class>PhyllotaxisEditor</class>
+ <widget class="QDialog" name="PhyllotaxisEditor">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>440</width>
-    <height>349</height>
+    <height>323</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -44,10 +44,20 @@
   <widget class="TestGLWidget" name="openGLWidget">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>20</y>
-     <width>300</width>
-     <height>200</height>
+     <x>20</x>
+     <y>60</y>
+     <width>281</width>
+     <height>191</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPlainTextEdit" name="expressionPlainTextEdit">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>10</y>
+     <width>101</width>
+     <height>31</height>
     </rect>
    </property>
   </widget>
@@ -59,12 +69,14 @@
    <header>Widgets/testglwidget.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../res/resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>TestWindow</receiver>
+   <receiver>PhyllotaxisEditor</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -80,7 +92,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>TestWindow</receiver>
+   <receiver>PhyllotaxisEditor</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

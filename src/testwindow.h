@@ -22,18 +22,22 @@ class TestWindow : public QDialog
 {
     Q_OBJECT
 public:
-    TestWindow(QWidget* parent) :
+    explicit TestWindow(QWidget* parent) :
         QDialog(parent), ui(new Ui::TestWindow)
     {
         ui->setupUi(this);
     }
-    // Main virtual destructor, do nothing.
-    virtual ~TestWindow() {}
+    ~TestWindow() override {
+        delete ui;
+    }
 private slots:
-    // Create a private slots, here is optional.
-    void execute() const {
-        MGlobal::displayInfo("Hello World!");
-	}
+    void accept() override {
+        MGlobal::displayInfo("accept");
+    }
+    void reject() override {
+        MGlobal::displayInfo("reject");
+        QDialog::reject();
+    }
 private:
     Ui::TestWindow* ui;
 };

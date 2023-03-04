@@ -7,7 +7,7 @@
 #include "CurveNode.h"
 #include "Phyllotaxis/Grammar.h"
 #include "Phyllotaxis/PlanarPhyllotaxisGrammar.h"
-#include "TestQt.h"
+#include "testwindow.h"
 
 
 #define TEST_QT_GUI
@@ -54,7 +54,7 @@ struct UnitTestCmd : public MPxCommand {
 
 
 #ifdef TEST_QT_GUI
-		if(qWinPtr.isNull()) {
+		if(!qWinPtr) {
 			qWinPtr = new TestWindow{ MQtUtil::mainWindow() };
 			qWinPtr->show();
 		} else {
@@ -69,13 +69,11 @@ struct UnitTestCmd : public MPxCommand {
 	}
 
 	static void cleanup() {
-		if(!qWinPtr.isNull()) {
-			delete qWinPtr;
-		}
+		delete qWinPtr;
 	}
 
 private:
-	static QPointer<TestWindow> qWinPtr;
+	static TestWindow* qWinPtr;
 };
 
-QPointer<TestWindow> UnitTestCmd::qWinPtr;
+TestWindow* UnitTestCmd::qWinPtr = nullptr;

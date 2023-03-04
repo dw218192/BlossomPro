@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="MEL">
+    <file>cleanup.mel</file>
+    <file>startup.mel</file>
+  </qresource>
+</RCC>

@@ -24,3 +24,8 @@ void PhyllotaxisEditor::on_expressionPlainTextEdit_textChanged() {
     m_ui->curveWidget->setCurve(m_func);
     MGlobal::displayInfo(m_ui->curveWidget->valid() ? "valid" : "not valid");
 }
+
+void PhyllotaxisEditor::on_curveWidget_curveUpdated() {
+    m_ui->yMinLabel->setText(QString::number(m_ui->curveWidget->getYMin(), 'f', 1));
+    m_ui->yMaxLabel->setText(QString::number(m_ui->curveWidget->getYMax(), 'f', 1));
+}

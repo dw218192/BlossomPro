@@ -20,6 +20,9 @@ set(CMAKE_AUTOUIC ON)
 # main plugin srcs
 file(GLOB SOURCE_FILES ${SOURCE_FILES} "src/*.cpp" "src/*.h" "src/Cmds/*.cpp" "src/Widgets/*.cpp")
 
+# test app srcs
+file(GLOB EXPRESSION_TEST_SRCS "src/TestApps/*.cpp")
+
 # our libs
 add_library(ExpressionParser STATIC ${EXPRESSION_PARSER_SRCS})
 target_include_directories(ExpressionParser
@@ -28,6 +31,15 @@ target_include_directories(ExpressionParser
 )
 add_library (PhyllotaxisGenerator STATIC ${PHYLLOTAXIS_SRCS})
 target_link_libraries (PhyllotaxisGenerator PRIVATE ExpressionParser)
+
+# test apps
+add_executable(ExpressionParserTest ${EXPRESSION_TEST_SRCS})
+target_include_directories(ExpressionParserTest 
+	PRIVATE
+		${PROJECT_SOURCE_DIR}/include
+)
+target_link_libraries(ExpressionParserTest PRIVATE ExpressionParser)
+
 
 # plugin
 set(LIBRARIES OpenMaya OpenMayaUI Foundation)

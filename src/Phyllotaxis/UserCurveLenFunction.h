@@ -22,14 +22,19 @@ struct UserCurveLenFunction
 		int unknownCount = 0;
 		for(auto&& token : *postFix) {
 			if(token->type() == ExpressionParser::Token::Type::variable) {
-				++unknownCount;
-				if(unknownCount > 1) {
-					m_valid = false;
-					m_varMap.clear();
-					return;
-				}
+				auto const var = std::dynamic_pointer_cast<ExpressionParser::Variable>(token);
+				// if it's not a constant and we have not seen it before
+				if(!var->isConstant() && !m_varMap.count(var->value())) {
+					++unknownCount;
 
-				m_varMap[token->value()];
+					if (unknownCount > 1) {
+						m_valid = false;
+						m_varMap.clear();
+						return;
+					}
+
+					m_varMap[token->value()];
+				}
 			}
 		}
 	}

@@ -50,7 +50,7 @@ namespace ExpressionParser {
 		Variable(Variable&&) = default;
 		~Variable() override = default;
 		auto eval(std::unordered_map<std::string, double> const& variableValues) const noexcept -> double;
-
+		auto isConstant() const noexcept -> bool;
 		friend auto operator<<(std::ostream& os, Variable const& var) noexcept -> std::ostream&;
 	private:
 		// only set if the variable is actually a constant

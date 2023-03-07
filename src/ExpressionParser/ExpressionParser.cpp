@@ -1,5 +1,4 @@
 #include "ExpressionParser.h"
-#include "ExpressionParser.h"
 
 #include <algorithm>
 #include <vector>
@@ -13,6 +12,7 @@
 // 1. 5(6+a)  omitted multiplication
 // 2. +34     unary plus
 // 3. -(2+3)  unary operation on brackets
+// 4. x x x   variable names separated by spaces
 
 namespace ExpressionParser {
 	static std::string s_lastError;
@@ -72,10 +72,15 @@ namespace ExpressionParser {
 			if(it != variableValues.end()) {
 				return it->second;
 			} else {
-				std::cerr << std::string{"Variable not found, assuming 0 : "} + m_value;
+				s_lastError = "Variable not found, assuming 0, value = ";
+				s_lastError += m_value;
 				return 0;
 			}
 		}
+	}
+
+	auto Variable::isConstant() const noexcept -> bool {
+		return static_cast<bool>(m_numericVal);
 	}
 
 	auto toString(Token::Type type) noexcept -> char const* {
@@ -121,7 +126,8 @@ namespace ExpressionParser {
 		for (size_t i = 0; i < expr.size(); ++i) {
 			std::string str{ expr[i] };
 
-			bool isNegativeSign = str == "-" && (tokens.empty() || (tokens.back()->type() != Token::Type::variable && tokens.back()->type() != Token::Type::rightBracket));
+			bool const isNegativeSign = str == "-" && (tokens.empty() || 
+				(tokens.back()->type() != Token::Type::variable && tokens.back()->type() != Token::Type::rightBracket));
 			if (Token::isOperator(str) && !isNegativeSign) {
 				tokens.emplace_back(std::make_shared<BinaryOp>(str));
 			} else if (str == "(") {
@@ -187,6 +193,8 @@ namespace ExpressionParser {
 						return std::nullopt;
 					}
 				} else {
+
+					s_lastError = "binary operator cannot be preceded by nothing";
 					return std::nullopt;
 				}
 			} else if (token.type() == Token::Type::leftBracket) {
@@ -270,6 +278,8 @@ namespace ExpressionParser {
 					stk.pop_back();
 				} else {
 					// ill-formed expression
+					s_lastError = "ill-formed expr: mismatched bracket";
+
 					return std::nullopt;
 				}
 			}
@@ -277,6 +287,8 @@ namespace ExpressionParser {
 		while (!stk.empty()) {
 			if(stk.back()->type() == Token::Type::leftBracket) {
 				// ill-formed expression
+				s_lastError = "ill-formed expr: mismatched bracket";
+
 				return std::nullopt;
 			}
 			processed.emplace_back(stk.back());
@@ -302,7 +314,7 @@ namespace ExpressionParser {
 				// evaluate a binary expression
 				size_t const n = stk.size();
 				if(stk[n - 3]->type() != Token::Type::binaryOperator) {
-					s_lastError = "ill-formed expr";
+					s_lastError = "ill-formed expr: invalid operands";
 					return std::nullopt;
 				}
 				auto op = stk[n - 3];
@@ -320,10 +332,10 @@ namespace ExpressionParser {
 			// std::cout << stk << std::endl;
 		}
 		if(stk.size() != 1) {
-			s_lastError = "ill-formed expr";
+			s_lastError = "ill-formed expr: stack size is not 1";
 			return std::nullopt;
 		}
-		double ret = std::dynamic_pointer_cast<Variable>(stk.back())->eval({});
+		double ret = std::dynamic_pointer_cast<Variable>(stk.back())->eval(values);
 		return std::make_optional(ret);
 	}
 

@@ -12,9 +12,10 @@ class PhyllotaxisEditor : public QDialog
 public:
     explicit PhyllotaxisEditor(QWidget* parent);
     ~PhyllotaxisEditor() override;
+
 private slots: //void on_<object name>_<signal name>(<signal parameters>);
     void on_expressionPlainTextEdit_textChanged();
-
+    void on_curveWidget_curveUpdated();
 private:
     Ui::PhyllotaxisEditor* m_ui;
     std::shared_ptr<UserCurveLenFunction> m_func;

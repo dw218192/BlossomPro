@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(PROJECT_NAME "BlossomPro")
 project (${PROJECT_NAME} CXX)
 
+
 file(GLOB EXPRESSION_PARSER_SRCS "src/ExpressionParser/*.cpp")
 file(GLOB PHYLLOTAXIS_SRCS "src/Phyllotaxis/*.cpp" "src/Phyllotaxis/*.h")
 file(GLOB RESOURCE_FILES "res/*.qrc")
@@ -17,7 +18,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # main plugin srcs
-file(GLOB SOURCE_FILES ${SOURCE_FILES} "src/*.cpp" "src/*.h")
+file(GLOB SOURCE_FILES ${SOURCE_FILES} "src/*.cpp" "src/*.h" "src/Cmds/*.cpp" "src/Widgets/*.cpp")
 
 # our libs
 add_library(ExpressionParser STATIC ${EXPRESSION_PARSER_SRCS})
@@ -48,6 +49,8 @@ target_sources(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} 
 	PUBLIC
 		${AUTOGEN_BUILD_DIR}
+	PRIVATE
+		${PROJECT_SOURCE_DIR}/include
 )
 
 # complier settings

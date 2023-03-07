@@ -1,0 +1,3 @@
+if(`menu -exists $blossomProMenu`) {
+	deleteUI $blossomProMenu;
+}

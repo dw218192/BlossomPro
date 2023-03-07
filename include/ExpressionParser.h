@@ -57,6 +57,7 @@ namespace ExpressionParser {
 		std::optional<double> m_numericVal;
 	};
 
+	auto getLastError() noexcept -> std::string const&;
 	auto operator<<(std::ostream& os, Token::Type type) noexcept -> std::ostream&;
 	auto operator<<(std::ostream& os, Token const& token) noexcept -> std::ostream&;
 	auto operator<<(std::ostream& os, TokenList const& tokens) noexcept -> std::ostream&;

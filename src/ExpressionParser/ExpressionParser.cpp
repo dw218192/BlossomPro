@@ -1,4 +1,5 @@
 #include "ExpressionParser.h"
+#include "ExpressionParser.h"
 
 #include <algorithm>
 #include <vector>
@@ -14,6 +15,11 @@
 // 3. -(2+3)  unary operation on brackets
 
 namespace ExpressionParser {
+	static std::string s_lastError;
+	auto getLastError() noexcept ->std::string const& {
+		return s_lastError;
+	}
+
 	auto Token::isOperator(std::string const& val) noexcept -> bool {
 		return val == "+" || val == "-" || val == "*" || val == "/" || val == "^";
 	}
@@ -71,14 +77,18 @@ namespace ExpressionParser {
 			}
 		}
 	}
-	auto operator<<(std::ostream& os, Token::Type type) noexcept -> std::ostream& {
-		switch(type) {
-		case Token::Type::binaryOperator: os << "bop"; break;
-		case Token::Type::leftBracket: os << "lb"; break;
-		case Token::Type::rightBracket: os << "rb"; break;
-		case Token::Type::variable: os << "var"; break;
-		default: os << "unknown"; break;
+
+	auto toString(Token::Type type) noexcept -> char const* {
+		switch (type) {
+		case Token::Type::binaryOperator: return "bop";
+		case Token::Type::leftBracket: return "lb";
+		case Token::Type::rightBracket: return "rb";
+		case Token::Type::variable: return "var";
+		default: return "unknown";
 		}
+	}
+	auto operator<<(std::ostream& os, Token::Type type) noexcept -> std::ostream& {
+		os << toString(type);
 		return os;
 	}
 
@@ -142,7 +152,14 @@ namespace ExpressionParser {
 		 *
 		 *	right brackets can be preceded by
 		 *	rb, var
+		 *
+		 *	nothing can be preceded by
+		 *	rb, var
 		*/
+		if(tokens.empty()) {
+			s_lastError = "token list is empty";
+			return std::nullopt;
+		}
 
 		for (auto it = tokens.begin(), prevIt = tokens.end(); it != tokens.end(); prevIt = it, ++it) {
 			Token const& token = **it;
@@ -151,6 +168,10 @@ namespace ExpressionParser {
 					Token const& prevToken = **prevIt;
 					if (prevToken.type() != Token::Type::binaryOperator &&
 						prevToken.type() != Token::Type::leftBracket) {
+
+						s_lastError = "variable must be preceded by binary operator or left bracket\n got:";
+						s_lastError += toString(prevToken.type());
+
 						return std::nullopt;
 					}
 				}
@@ -159,6 +180,10 @@ namespace ExpressionParser {
 					Token const& prevToken = **prevIt;
 					if (prevToken.type() != Token::Type::variable &&
 						prevToken.type() != Token::Type::rightBracket) {
+
+						s_lastError = "binary operator must be preceded by variable or right bracket\n got:";
+						s_lastError += toString(prevToken.type());
+
 						return std::nullopt;
 					}
 				} else {
@@ -169,6 +194,10 @@ namespace ExpressionParser {
 					Token const& prevToken = **prevIt;
 					if (prevToken.type() != Token::Type::binaryOperator && 
 						prevToken.type() != Token::Type::leftBracket) {
+
+						s_lastError = "left bracket must be preceded by binary operator or left bracket\n got:";
+						s_lastError += toString(prevToken.type());
+
 						return std::nullopt;
 					}
 				}
@@ -177,14 +206,37 @@ namespace ExpressionParser {
 					Token const& prevToken = **prevIt;
 					if (prevToken.type() != Token::Type::variable && 
 						prevToken.type() != Token::Type::rightBracket) {
+
+						s_lastError = "right bracket must be preceded by variable or right bracket\n got:";
+						s_lastError += toString(prevToken.type());
+
 						return std::nullopt;
 					}
 				} else {
+
+					s_lastError = "right bracket cannot be preceded by nothing";
 					return std::nullopt;
 				}
 			} else {
+
+				s_lastError = "unknown token of value = ";
+				s_lastError += token.value();
+				s_lastError += " and type = ";
+				s_lastError += toString(token.type());
+
 				return std::nullopt;
 			}
+		}
+
+		auto const lastIt = std::prev(tokens.end());
+		Token const& lastToken = **lastIt;
+		if (lastToken.type() != Token::Type::variable &&
+			lastToken.type() != Token::Type::rightBracket) {
+
+			s_lastError = "the expression must end with a variable or right bracket\n got:";
+			s_lastError += toString(lastToken.type());
+
+			return std::nullopt;
 		}
 
 		return std::make_optional(std::move(tokens));
@@ -250,7 +302,7 @@ namespace ExpressionParser {
 				// evaluate a binary expression
 				size_t const n = stk.size();
 				if(stk[n - 3]->type() != Token::Type::binaryOperator) {
-					std::cerr << "ill-formed expr\n";
+					s_lastError = "ill-formed expr";
 					return std::nullopt;
 				}
 				auto op = stk[n - 3];
@@ -268,7 +320,7 @@ namespace ExpressionParser {
 			// std::cout << stk << std::endl;
 		}
 		if(stk.size() != 1) {
-			std::cerr << "ill-formed expr\n";
+			s_lastError = "ill-formed expr";
 			return std::nullopt;
 		}
 		double ret = std::dynamic_pointer_cast<Variable>(stk.back())->eval({});
@@ -278,12 +330,10 @@ namespace ExpressionParser {
 	auto evalExpression(std::string const& expression, std::unordered_map<std::string, double> const& values) noexcept -> std::optional<double> {
 		auto const tokens = tokenize(expression);
 		if(!tokens) {
-			std::cerr << "tokenize failed\n";
 			return std::nullopt;
 		}
 		auto const postFixTokens = toPostFix(*tokens);
 		if(!postFixTokens) {
-			std::cerr << "toPostFix failed\n";
 			return std::nullopt;
 		}
 		return evalExpression(*postFixTokens, values);

@@ -7,12 +7,9 @@
 #include "CurveNode.h"
 #include "Phyllotaxis/Grammar.h"
 #include "Phyllotaxis/PlanarPhyllotaxisGrammar.h"
-#include "testwindow.h"
 
-
-#define TEST_QT_GUI
 struct UnitTestCmd : public MPxCommand {
-	virtual auto doIt(const MArgList& args) -> MStatus override {
+	auto doIt(const MArgList& args) -> MStatus override {
 		Grammar::Turtle t;
 #ifdef TURTLE_TEST_1
 		HANDLE_EXCEPTION(
@@ -51,29 +48,10 @@ struct UnitTestCmd : public MPxCommand {
 			ppg.process(50);
 		);
 #endif
-
-
-#ifdef TEST_QT_GUI
-		if(!qWinPtr) {
-			qWinPtr = new TestWindow{ MQtUtil::mainWindow() };
-			qWinPtr->show();
-		} else {
-			qWinPtr->raise();
-		}
 		return MStatus::kSuccess;
-#endif
 	}
 
 	static auto creator() -> void* {
 		return new UnitTestCmd;
 	}
-
-	static void cleanup() {
-		delete qWinPtr;
-	}
-
-private:
-	static TestWindow* qWinPtr;
 };
-
-TestWindow* UnitTestCmd::qWinPtr = nullptr;

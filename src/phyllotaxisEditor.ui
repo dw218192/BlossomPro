@@ -41,7 +41,7 @@
     <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
    </property>
   </widget>
-  <widget class="TestGLWidget" name="openGLWidget">
+  <widget class="CurveWidget" name="curveWidget">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -54,7 +54,7 @@
   <widget class="QPlainTextEdit" name="expressionPlainTextEdit">
    <property name="geometry">
     <rect>
-     <x>20</x>
+     <x>30</x>
      <y>10</y>
      <width>101</width>
      <height>31</height>
@@ -64,9 +64,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>TestGLWidget</class>
+   <class>CurveWidget</class>
    <extends>QOpenGLWidget</extends>
-   <header>Widgets/testglwidget.h</header>
+   <header>Widgets/CurveWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources>

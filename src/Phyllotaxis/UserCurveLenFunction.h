@@ -8,23 +8,27 @@
  */
 struct UserCurveLenFunction
 {
-	explicit UserCurveLenFunction(std::string expr) : m_expr(std::move(expr)) {
+	explicit UserCurveLenFunction(std::string expr) noexcept : m_valid(true), m_expr(std::move(expr)) {
 		auto const tokens = ExpressionParser::tokenize(m_expr);
 		if(!tokens) {
-			throw std::runtime_error{ std::string { "failed to tokenize: " } + m_expr };
+			m_valid = false;
+			return;
 		}
-		auto postFix = ExpressionParser::toPostFix(*tokens);
+		auto const postFix = ExpressionParser::toPostFix(*tokens);
 		if(!postFix) {
-			throw std::runtime_error{ std::string { "failed to convert to postfix: " } + m_expr };
+			m_valid = false;
+			return;
 		}
-
 		int unknownCount = 0;
 		for(auto&& token : *postFix) {
 			if(token->type() == ExpressionParser::Token::Type::variable) {
 				++unknownCount;
 				if(unknownCount > 1) {
-					throw std::runtime_error{ std::string { "expression can only have 1 variable: " } + m_expr };
+					m_valid = false;
+					m_varMap.clear();
+					return;
 				}
+
 				m_varMap[token->value()];
 			}
 		}
@@ -35,7 +39,11 @@ struct UserCurveLenFunction
 	 * \param s curve length
 	 * \return the function output
 	 */
-	double operator()(double s) {
+	auto operator()(double s) {
+		if(!m_valid) {
+			return 0.0;
+		}
+
 		m_varMap.begin()->second = s;
 		auto const ret = ExpressionParser::evalExpression(m_expr, m_varMap);
 		if(!ret) {
@@ -43,7 +51,12 @@ struct UserCurveLenFunction
 		}
 		return *ret;
 	}
+
+	operator bool() const {
+		return m_valid;
+	}
 private:
+	bool m_valid;
 	std::string m_expr;
 	std::unordered_map<std::string, double> m_varMap;
 };

@@ -1,1 +1,4 @@
-print("hello from MEL")
+$blossomProMenu = `menu -p $gMainWindow -label "BlossomPro"`;
+	menuItem -label "unitTest" -command "unitTest";
+	menuItem -label "createTestWindow" -command "createTestWindow";
+	menuItem -label "createPhyllotaxisWindow" -command "createPhyllotaxisWindow";

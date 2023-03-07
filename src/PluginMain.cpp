@@ -15,9 +15,20 @@
 #include <maya/MFnDependencyNode.h>
 #include <maya/MStringArray.h>
 
-#include <QFile>
+#include <QTextStream>
+
 #include "CurveNode.h"
-#include "UnitTestCmd.h"
+#include "testwindow.h"
+#include "phyllotaxisEditor.h"
+
+#include "Cmds/UnitTestCmd.h"
+#include "Cmds/WindowCmd.h"
+
+static constexpr std::pair<char const*, MCreatorFunction> g_cmds[] = {
+    { "unitTest", UnitTestCmd::creator },
+    { "createTestWindow", WindowCmd<TestWindow>::creator },
+    { "createPhyllotaxisWindow", WindowCmd<PhyllotaxisEditor>::creator }
+};
 
 static void loadAndExecuteMelScript(char const* scriptFileName) {
     QString const filePath = QString{ ":/" } + scriptFileName;
@@ -33,20 +44,23 @@ static void loadAndExecuteMelScript(char const* scriptFileName) {
 
 MStatus initializePlugin( MObject obj )
 {
-    MStatus   status = MStatus::kSuccess;
+    MStatus status = MStatus::kSuccess;
     MFnPlugin plugin( obj, "BlossomPro", "1.0", "Any");
 
-    status = plugin.registerCommand("test", UnitTestCmd::creator);
-    CHECK_MSTATUS_AND_RETURN(status, MStatus::kSuccess);
+    // register commands
+    for(auto&& [cmdDesc, func] : g_cmds) {
+        status = plugin.registerCommand(cmdDesc, func);
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+    }
 
     // Register Node
     status = plugin.registerNode("CurveNode", CurveNode::s_id, CurveNode::creator, CurveNode::initialize);
-    CHECK_MSTATUS_AND_RETURN(status, MStatus::kSuccess);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
 
     // init qt resource
     Q_INIT_RESOURCE(resources);
     loadAndExecuteMelScript("MEL/startup.mel");
-
+    
     return status;
 }
 
@@ -55,11 +69,14 @@ MStatus uninitializePlugin( MObject obj)
     MStatus   status = MStatus::kSuccess;
     MFnPlugin plugin( obj );
 
-    status = plugin.deregisterCommand("test");
-    CHECK_MSTATUS_AND_RETURN(status, MStatus::kSuccess);
+    // deregister commands
+    for (auto&& [cmdDesc, func] : g_cmds) {
+        status = plugin.deregisterCommand(cmdDesc);
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+    }
 
     status = plugin.deregisterNode(CurveNode::s_id);
-    CHECK_MSTATUS_AND_RETURN(status, MStatus::kSuccess);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
 
     loadAndExecuteMelScript("MEL/cleanup.mel");
 

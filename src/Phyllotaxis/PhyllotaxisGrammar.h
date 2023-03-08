@@ -17,10 +17,12 @@ struct PhyllotaxisGrammar : public Grammar {
 			return;
 		}
 		double x = m_info.getPoint(m_s).x;
+		double const curveLen = m_info.length();
+
 		// perform integration
-		while (m_a < 1 && m_s < m_info.length()) {
+		while (m_a < 1 && m_s < curveLen) {
 			x = m_info.getPoint(m_s).x;
-			double const density = m_densityFunc(m_s);
+			double const density = m_densityFunc(m_s / curveLen);
 			m_a += 2 * x / (density * density) * m_integrationStep;
 			m_s += m_integrationStep;
 		}
@@ -32,7 +34,7 @@ struct PhyllotaxisGrammar : public Grammar {
 				.forward(y)
 				.rotateRight(90)
 				.forward(x)
-				.drawSphere(m_densityFunc(m_s))
+				.drawSphere(m_densityFunc(m_s / curveLen))
 			.popState()
 			.rollLeft(137.5);
 	}

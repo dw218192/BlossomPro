@@ -8,11 +8,6 @@
 #include <maya/MGlobal.h>
 #include <maya/MVectorArray.h>
 
-MTypeId CurveNode::s_id{ 0xdead };
-MObject CurveNode::s_curve;
-MObject CurveNode::s_step;
-MObject CurveNode::s_output;
-
 auto CurveNode::creator()->void* {
 	return new CurveNode;
 }
@@ -33,7 +28,16 @@ auto CurveNode::initialize() -> MStatus {
 	CurveNode::s_step = numericAttribute.create(
 		"step",
 		"st",
-		MFnNumericData::Type::k2Double,
+		MFnNumericData::Type::kDouble,
+		0.1,
+		&status
+	);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	CurveNode::s_percent = numericAttribute.create(
+		"percent",
+		"pc",
+		MFnNumericData::Type::kDouble,
 		0.1,
 		&status
 	);
@@ -54,13 +58,20 @@ auto CurveNode::initialize() -> MStatus {
 	status = addAttribute(CurveNode::s_step);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	status = addAttribute(CurveNode::s_percent);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
 	status = addAttribute(CurveNode::s_output);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
+
 
 	status = attributeAffects(CurveNode::s_curve, CurveNode::s_output);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	status = attributeAffects(CurveNode::s_step, CurveNode::s_output);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	status = attributeAffects(CurveNode::s_percent, CurveNode::s_output);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	return MStatus::kSuccess;
@@ -81,10 +92,13 @@ auto CurveNode::compute(const MPlug& plug, MDataBlock& data) -> MStatus {
 	const double step = data.inputValue(CurveNode::s_step, &status).asDouble();
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	const double percent = data.inputValue(CurveNode::s_percent, &status).asDouble();
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
 	MFnNurbsCurve curve{ curveObj, &status };
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
-	const double totalLen = curve.length(0.001, &status);
+	const double totalLen = percent * curve.length(0.01, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	MFnArrayAttrsData arrayAttrsData;
@@ -96,7 +110,7 @@ auto CurveNode::compute(const MPlug& plug, MDataBlock& data) -> MStatus {
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	for(double len = 0; len < totalLen; len += step) {
-		const double param = curve.findParamFromLength(len, &status);
+		const double param = curve.findParamFromLength(len, 0.01, &status);
 		CHECK_MSTATUS_AND_RETURN_IT(status);
 
 		MPoint point;

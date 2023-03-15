@@ -57,7 +57,7 @@ struct UserCurveLenFunction
 		return *ret;
 	}
 
-	operator bool() const {
+	bool valid() const {
 		return m_valid;
 	}
 private:

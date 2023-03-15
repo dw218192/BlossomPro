@@ -50,12 +50,12 @@ MStatus initializePlugin( MObject obj )
     // register commands
     for(auto&& [cmdDesc, func] : g_cmds) {
         status = plugin.registerCommand(cmdDesc, func);
-        CHECK(status);
+        CHECK(status, status);
     }
 
     // Register Node
     status = plugin.registerNode("CurveNode", CurveNode::s_id, CurveNode::creator, CurveNode::initialize);
-    CHECK(status);
+    CHECK(status, status);
 
     // init qt resource
     Q_INIT_RESOURCE(resources);
@@ -72,11 +72,11 @@ MStatus uninitializePlugin( MObject obj)
     // deregister commands
     for (auto&& [cmdDesc, func] : g_cmds) {
         status = plugin.deregisterCommand(cmdDesc);
-        CHECK(status);
+        CHECK(status, status);
     }
 
     status = plugin.deregisterNode(CurveNode::s_id);
-    CHECK(status);
+    CHECK(status, status);
 
     loadAndExecuteMelScript("MEL/cleanup.mel");
 

@@ -22,7 +22,7 @@ auto CurveNode::initialize() -> MStatus {
 		MFnData::kNurbsCurve,
 		MObject::kNullObj,
 		&status);
-	CHECK(status);
+	CHECK(status, status);
 
 	CurveNode::s_step = numericAttribute.create(
 		"step",
@@ -31,7 +31,7 @@ auto CurveNode::initialize() -> MStatus {
 		0.1,
 		&status
 	);
-	CHECK(status);
+	CHECK(status, status);
 
 	CurveNode::s_percent = numericAttribute.create(
 		"percent",
@@ -40,7 +40,7 @@ auto CurveNode::initialize() -> MStatus {
 		0.1,
 		&status
 	);
-	CHECK(status);
+	CHECK(status, status);
 
 	CurveNode::s_output = typedAttribute.create(
 		"out_arr",
@@ -49,29 +49,29 @@ auto CurveNode::initialize() -> MStatus {
 		MObject::kNullObj,
 		&status
 	);
-	CHECK(status);
+	CHECK(status, status);
 
 	status = addAttribute(CurveNode::s_curve);
-	CHECK(status);
+	CHECK(status, status);
 
 	status = addAttribute(CurveNode::s_step);
-	CHECK(status);
+	CHECK(status, status);
 
 	status = addAttribute(CurveNode::s_percent);
-	CHECK(status);
+	CHECK(status, status);
 
 	status = addAttribute(CurveNode::s_output);
-	CHECK(status);
+	CHECK(status, status);
 
 
 	status = attributeAffects(CurveNode::s_curve, CurveNode::s_output);
-	CHECK(status);
+	CHECK(status, status);
 
 	status = attributeAffects(CurveNode::s_step, CurveNode::s_output);
-	CHECK(status);
+	CHECK(status, status);
 
 	status = attributeAffects(CurveNode::s_percent, CurveNode::s_output);
-	CHECK(status);
+	CHECK(status, status);
 
 	return MStatus::kSuccess;
 }
@@ -83,32 +83,32 @@ auto CurveNode::compute(const MPlug& plug, MDataBlock& data) -> MStatus {
 	}
 
 	MObject curveObj = data.inputValue(CurveNode::s_curve, &status).asNurbsCurveTransformed();
-	CHECK(status);
+	CHECK(status, status);
 
 	const double step = data.inputValue(CurveNode::s_step, &status).asDouble();
-	CHECK(status);
+	CHECK(status, status);
 
 	const double percent = data.inputValue(CurveNode::s_percent, &status).asDouble();
-	CHECK(status);
+	CHECK(status, status);
 
 	MFnNurbsCurve curve{ curveObj, &status };
-	CHECK(status);
+	CHECK(status, status);
 
 	const double totalLen = percent * curve.length(0.01, &status);
-	CHECK(status);
+	CHECK(status, status);
 
 	MFnArrayAttrsData arrayAttrsData;
 
 	MObject aadObj = arrayAttrsData.create(&status);
-	CHECK(status);
+	CHECK(status, status);
 
 	MVectorArray positions = arrayAttrsData.vectorArray("position", &status);
-	CHECK(status);
+	CHECK(status, status);
 
 	CurveInfo curveInfo{ curve };
 	for(double len = 0.1; len < totalLen; len += step) {
 		HANDLE_EXCEPTION(status = positions.append(curveInfo.getPoint(len)));
-		CHECK(status);
+		CHECK(status, status);
 	}
 	MGlobal::displayInfo(MString{"num of instances = "} + positions.length());
 	data.outputValue(CurveNode::s_output).setMObject(aadObj);

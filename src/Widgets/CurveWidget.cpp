@@ -65,8 +65,8 @@ void CurveWidget::setCurve(std::shared_ptr<UserCurveLenFunction> const& curveFun
 }
 
 bool CurveWidget::valid() const {
-    if (m_pfunc.lock()) {
-        return *m_pfunc.lock();
+    if (auto const ptr = m_pfunc.lock()) {
+        return ptr->valid();
     } else {
         return false;
     }

@@ -1,6 +1,5 @@
 #include "CurveNode.h"
-#include "CurveNode.h"
-#include "CurveNode.h"
+#include "Phyllotaxis/CurveInfo.h"
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnArrayAttrsData.h>
@@ -23,7 +22,7 @@ auto CurveNode::initialize() -> MStatus {
 		MFnData::kNurbsCurve,
 		MObject::kNullObj,
 		&status);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	CurveNode::s_step = numericAttribute.create(
 		"step",
@@ -32,7 +31,7 @@ auto CurveNode::initialize() -> MStatus {
 		0.1,
 		&status
 	);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	CurveNode::s_percent = numericAttribute.create(
 		"percent",
@@ -41,7 +40,7 @@ auto CurveNode::initialize() -> MStatus {
 		0.1,
 		&status
 	);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	CurveNode::s_output = typedAttribute.create(
 		"out_arr",
@@ -50,36 +49,33 @@ auto CurveNode::initialize() -> MStatus {
 		MObject::kNullObj,
 		&status
 	);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	status = addAttribute(CurveNode::s_curve);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	status = addAttribute(CurveNode::s_step);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	status = addAttribute(CurveNode::s_percent);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	status = addAttribute(CurveNode::s_output);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 
 	status = attributeAffects(CurveNode::s_curve, CurveNode::s_output);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	status = attributeAffects(CurveNode::s_step, CurveNode::s_output);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	status = attributeAffects(CurveNode::s_percent, CurveNode::s_output);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	return MStatus::kSuccess;
 }
 auto CurveNode::compute(const MPlug& plug, MDataBlock& data) -> MStatus {
-	// findParamFromLength
-	// getPointAtParam
-
 	MStatus status;
 
 	if (plug != CurveNode::s_output) {
@@ -87,39 +83,34 @@ auto CurveNode::compute(const MPlug& plug, MDataBlock& data) -> MStatus {
 	}
 
 	MObject curveObj = data.inputValue(CurveNode::s_curve, &status).asNurbsCurveTransformed();
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	const double step = data.inputValue(CurveNode::s_step, &status).asDouble();
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	const double percent = data.inputValue(CurveNode::s_percent, &status).asDouble();
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	MFnNurbsCurve curve{ curveObj, &status };
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	const double totalLen = percent * curve.length(0.01, &status);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	MFnArrayAttrsData arrayAttrsData;
 
 	MObject aadObj = arrayAttrsData.create(&status);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
 	MVectorArray positions = arrayAttrsData.vectorArray("position", &status);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK(status);
 
-	for(double len = 0; len < totalLen; len += step) {
-		const double param = curve.findParamFromLength(len, 0.01, &status);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
-
-		MPoint point;
-		status = curve.getPointAtParam(param, point, MSpace::kWorld);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
-
-		positions.append(point);
+	CurveInfo curveInfo{ curve };
+	for(double len = 0.1; len < totalLen; len += step) {
+		HANDLE_EXCEPTION(status = positions.append(curveInfo.getPoint(len)));
+		CHECK(status);
 	}
-
+	MGlobal::displayInfo(MString{"num of instances = "} + positions.length());
 	data.outputValue(CurveNode::s_output).setMObject(aadObj);
 	data.setClean(plug);
 	return MStatus::kSuccess;

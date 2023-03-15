@@ -32,8 +32,8 @@ struct Grammar {
 
 		Turtle& pushState();
 		Turtle& popState();
-		Turtle& drawSphere(double radius) noexcept;
-		Turtle& drawCube(MVector const& dimension = {0,0,0}) noexcept;
+		Turtle& drawSphere(double radius);
+		Turtle& drawCube(MVector const& dimension = {0,0,0});
 	private:
 		Turtle& doLocalEulerDegrees(double x, double y, double z) noexcept;
 		Turtle& draw(MString const& melCommand);

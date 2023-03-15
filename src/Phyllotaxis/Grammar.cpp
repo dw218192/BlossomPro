@@ -15,7 +15,7 @@ Grammar::Turtle& Grammar::Turtle::forward(double length) {
 	MTransformationMatrix transform;
 	MStatus status = transform.setTranslation(MVector{ 0, 0, length }, MSpace::kTransform);
 	if (MFAIL(status)) {
-		throw status;
+		throw MAYA_EXCEPTION(status);
 	}
 	m_transform = transform.asMatrix() * m_transform;
 	return *this;
@@ -77,44 +77,6 @@ Grammar::Turtle& Grammar::Turtle::doLocalEulerDegrees(double x, double y, double
 
 Grammar::Turtle& Grammar::Turtle::draw(MString const& melCommand) {
 	MStatus status;
-
-	/*
-	MVector translation = m_transform.getTranslation(MSpace::kWorld, &status);
-	if (MFAIL(status)) {
-		throw status;
-	}
-
-	MVector rotation = m_transform.eulerRotation().asVector();
-	const auto rotOrder = m_transform.rotationOrder(&status);
-	if (MFAIL(status)) {
-		throw status;
-	}
-
-	const MString rotOrderStr = [rotOrder]() -> MString {
-		switch (rotOrder) {
-		case MTransformationMatrix::kXYZ: return "xyz ";
-		case MTransformationMatrix::kXZY: return "xzy ";
-		case MTransformationMatrix::kYXZ: return "yxz ";
-		case MTransformationMatrix::kYZX: return "yzx ";
-		case MTransformationMatrix::kZXY: return "zxy ";
-		case MTransformationMatrix::kZYX: return "zyx ";
-		default:
-			std::string msg = "unknown rot order: ";
-			msg += std::to_string(static_cast<int>(rotOrder));
-			throw std::runtime_error(msg);
-		}
-	} ();
-	auto vecToStr = [](MVector const& vec)->MString {
-		MString ret;
-		ret += vec.x; ret += " ";
-		ret += vec.y; ret += " ";
-		ret += vec.z; ret += " ";
-		return ret;
-	};
-	const MString rotationStr = vecToStr(rotation);
-	const MString translationStr = vecToStr(translation);
-	*/
-
 	MString cmd;
 	cmd += MString{ "$obj = `" } + melCommand + "`; ";
 	cmd += MString{ "xform" };
@@ -131,17 +93,15 @@ Grammar::Turtle& Grammar::Turtle::draw(MString const& melCommand) {
 
 	status = MGlobal::executeCommand(cmd);
 	if (MFAIL(status)) {
-		throw status;
+		throw MAYA_EXCEPTION(status);
 	}
 	return *this;
 }
 
-Grammar::Turtle& Grammar::Turtle::drawSphere(double radius) noexcept {
-	HANDLE_EXCEPTION(draw("polySphere"));
-	return *this;
+Grammar::Turtle& Grammar::Turtle::drawSphere(double radius) {
+	return draw("polySphere");
 }
 
-Grammar::Turtle& Grammar::Turtle::drawCube(MVector const& dimension) noexcept {
-	HANDLE_EXCEPTION(draw("polyCube"));
-	return *this;
+Grammar::Turtle& Grammar::Turtle::drawCube(MVector const& dimension) {
+	return draw("polyCube");
 }

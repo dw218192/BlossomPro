@@ -8,15 +8,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(PROJECT_NAME "BlossomPro")
 project (${PROJECT_NAME} CXX)
 
-
+# main lib srcs
 file(GLOB EXPRESSION_PARSER_SRCS "src/ExpressionParser/*.cpp")
 file(GLOB PHYLLOTAXIS_SRCS "src/Phyllotaxis/*.cpp" "src/Phyllotaxis/*.h")
 file(GLOB BSPLINE_SURFACE_SRCS "src/BSplineSurface/*.cpp" "src/BSplineSurface/*.h")
 file(GLOB RESOURCE_FILES "res/*.qrc")
-file(GLOB GLUT_LIBS "$ENV{GLUT_LIB_DIR}/*lib")
+
+# external sources
+set(EXT_DIR "ext")
+set(GLUT_DIR ${EXT_DIR}/freeglut-3.2.2)
 
 # set additional include dir
-set(GLM_INCLUDE "include/glm/")
+set(GLM_INCLUDE "${EXT_DIR}/glm/include")
+set(GLUT_INCLUDE "${GLUT_DIR}/include")
 set(BSPLINE_SURFACE_INCLUDE "src/BSplineSurface/")
 
 set(CMAKE_AUTOMOC ON)
@@ -28,6 +32,7 @@ file(GLOB SOURCE_FILES ${SOURCE_FILES} "src/*.cpp" "src/*.h" "src/Cmds/*.cpp" "s
 
 # test app srcs
 file(GLOB EXPRESSION_TEST_SRCS "src/TestApps/*.cpp")
+file(GLOB BSPLINE_SURF_TEST_SRCS "src/TestBSplineSurface/main.cpp")
 
 # our libs
 add_library(ExpressionParser STATIC ${EXPRESSION_PARSER_SRCS})
@@ -53,17 +58,32 @@ target_include_directories(ExpressionParserTest
 target_link_libraries(ExpressionParserTest PRIVATE ExpressionParser)
 
 # test BSplineSurface
-add_executable(TestBSplineSurface "src/TestBSplineSurface/main.cpp")
+# set vars for freeglut
+set(FREEGLUT_BUILD_SHARED_LIBS ON)
+add_subdirectory(${GLUT_DIR})
+
+add_executable(TestBSplineSurface ${BSPLINE_SURF_TEST_SRCS})
+add_dependencies(TestBSplineSurface freeglut)
 target_include_directories(TestBSplineSurface 
 	PRIVATE
 		${BSPLINE_SURFACE_INCLUDE}
-		$ENV{GLUT_DIR}
+		${GLUT_INCLUDE}
 )
-target_link_libraries(TestBSplineSurface PRIVATE BSplineSurface)
 target_link_libraries(TestBSplineSurface 
 	PRIVATE 
-		${GLUT_LIBS}
+		freeglut
+		BSplineSurface
 )
+# copy ${PROJECT_BINARY_DIR}/${GLUT_DIR}/bin/freeglut*.dll to ${PROJECT_BINARY_DIR}
+file(GLOB FREEGLUT_DLLS "${PROJECT_BINARY_DIR}/${GLUT_DIR}/bin/freeglut*.dll")
+if(FREEGLUT_DLLS)
+	foreach(FREEGLUT_DLL IN LISTS FREEGLUT_DLLS)
+        add_custom_command(TARGET TestBSplineSurface POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+                    ${FREEGLUT_DLL}
+                    $<TARGET_FILE_DIR:TestBSplineSurface>)
+    endforeach()
+endif()
 
 # plugin
 set(LIBRARIES OpenMaya OpenMayaUI Foundation)

@@ -11,7 +11,13 @@ project (${PROJECT_NAME} CXX)
 
 file(GLOB EXPRESSION_PARSER_SRCS "src/ExpressionParser/*.cpp")
 file(GLOB PHYLLOTAXIS_SRCS "src/Phyllotaxis/*.cpp" "src/Phyllotaxis/*.h")
+file(GLOB BSPLINE_SURFACE_SRCS "src/BSplineSurface/*.cpp" "src/BSplineSurface/*.h")
 file(GLOB RESOURCE_FILES "res/*.qrc")
+file(GLOB GLUT_LIBS "$ENV{GLUT_LIB_DIR}/*lib")
+
+# set additional include dir
+set(GLM_INCLUDE "include/glm/")
+set(BSPLINE_SURFACE_INCLUDE "src/BSplineSurface/")
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -32,6 +38,12 @@ target_include_directories(ExpressionParser
 add_library (PhyllotaxisGenerator STATIC ${PHYLLOTAXIS_SRCS})
 target_link_libraries (PhyllotaxisGenerator PRIVATE ExpressionParser)
 
+add_library(BSplineSurface STATIC ${BSPLINE_SURFACE_SRCS})
+target_include_directories(BSplineSurface
+	PUBLIC
+		${GLM_INCLUDE}
+)
+
 # test apps
 add_executable(ExpressionParserTest ${EXPRESSION_TEST_SRCS})
 target_include_directories(ExpressionParserTest 
@@ -40,6 +52,18 @@ target_include_directories(ExpressionParserTest
 )
 target_link_libraries(ExpressionParserTest PRIVATE ExpressionParser)
 
+# test BSplineSurface
+add_executable(TestBSplineSurface "src/TestBSplineSurface/main.cpp")
+target_include_directories(TestBSplineSurface 
+	PRIVATE
+		${BSPLINE_SURFACE_INCLUDE}
+		$ENV{GLUT_DIR}
+)
+target_link_libraries(TestBSplineSurface PRIVATE BSplineSurface)
+target_link_libraries(TestBSplineSurface 
+	PRIVATE 
+		${GLUT_LIBS}
+)
 
 # plugin
 set(LIBRARIES OpenMaya OpenMayaUI Foundation)

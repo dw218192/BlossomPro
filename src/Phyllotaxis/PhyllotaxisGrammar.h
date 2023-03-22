@@ -16,17 +16,23 @@ struct PhyllotaxisGrammar : public Grammar {
 		if(!hasNext()) {
 			return;
 		}
-		double x = m_info.getPoint(m_s).x;
+
 		double const curveLen = m_info.length();
 
+		// double x = m_info.getPoint(m_s).x;
+		// static constexpr double k_pi = 3.14159265358979323846;
+
 		// perform integration
-		while (m_a < 1 && m_s < curveLen) {
-			x = m_info.getPoint(m_s).x;
-			double const density = m_densityFunc(m_s / curveLen);
-			m_a += 2 * x / (density * density) * m_integrationStep;
-			m_s += m_integrationStep;
-		}
-		m_a = std::max(0.0, m_a - 1.0);
+		//while (m_a < 1 && m_s < curveLen) {
+		//	x = m_info.getPoint(m_s).x;
+		//	double const density = m_densityFunc(m_s / curveLen);
+		//	m_a += 2 * x / (density * density) * m_integrationStep;
+		//	m_s += m_integrationStep;
+		//}
+		//m_a = std::max(0.0, m_a - 1.0);
+
+		m_s += m_integrationStep;
+		double const x = m_info.getPoint(m_s).x;
 		double const y = m_info.getPoint(m_s).y;
 
 		m_turtle

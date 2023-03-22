@@ -99,9 +99,15 @@ Grammar::Turtle& Grammar::Turtle::draw(MString const& melCommand) {
 }
 
 Grammar::Turtle& Grammar::Turtle::drawSphere(double radius) {
-	return draw("polySphere");
+	return draw(MString{ "polySphere -r " } + radius);
 }
 
 Grammar::Turtle& Grammar::Turtle::drawCube(MVector const& dimension) {
-	return draw("polyCube");
+	MString cmd = "polyCube -w ";
+	cmd += dimension[0];
+	cmd += "-h ";
+	cmd += dimension[1];
+	cmd += "-d ";
+	cmd += dimension[2];
+	return draw(cmd);
 }

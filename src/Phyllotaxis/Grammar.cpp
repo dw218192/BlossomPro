@@ -111,3 +111,12 @@ Grammar::Turtle& Grammar::Turtle::drawCube(MVector const& dimension) {
 	cmd += dimension[2];
 	return draw(cmd);
 }
+
+MVector Grammar::Turtle::getPos() const {
+	MStatus status;
+	MVector ret = MTransformationMatrix{ m_transform }.getTranslation(MSpace::kWorld, &status);
+	if (MFAIL(status)) {
+		throw MAYA_EXCEPTION(status);
+	}
+	return ret;
+}

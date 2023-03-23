@@ -1,8 +1,11 @@
 #include "phyllotaxisEditor.h"
+#include "PhyllotaxisNode.h"
+
 #include <maya/MGlobal.h>
 #include <maya/MQtUtil.h>
 #include <maya/MSelectionList.h>
 #include <maya/MItSelectionList.h>
+#include <maya/MDagPath.h>
 #include <QSpinbox>
 
 PhyllotaxisEditor::PhyllotaxisEditor(QWidget* parent) :
@@ -63,8 +66,45 @@ void PhyllotaxisEditor::on_createBtn_clicked() {
         MFnNurbsCurve fnNurbsCurve { nurbsCurveObj, &status };
         CHECK(status, (void)0);
 
-        m_grammar = std::make_unique<PhyllotaxisGrammar>(CurveInfo{fnNurbsCurve}, *m_func, m_ui.integStepDoubleBox->value());
-        m_grammar->process(m_ui.numIterSpinBpx->value());
+        MDagPath dagPath;
+        status = selection.getDagPath(0, dagPath);
+        CHECK(status, (void)0);
+
+        MFnDagNode dagNode { dagPath };
+        MString curveObjName = dagNode.name(&status);
+        CHECK(status, (void)0);
+
+    	// m_grammar = std::make_unique<PhyllotaxisGrammar>(CurveInfo{fnNurbsCurve}, *m_func, m_ui.integStepDoubleBox->value());
+        // m_grammar->process(m_ui.numIterSpinBpx->value());
+
+        static char const* melCmd =
+            "$phylloNode = `createNode %s`; \n"
+            "$ins = `createNode instancer`; \n"
+			"$sphere = `polySphere`;\n"
+			"setAttr ($phylloNode + \".%s\") %d; \n"  // set curve func id
+			"setAttr ($phylloNode + \".%s\") %lf; \n" // set step
+			"connectAttr %s.worldSpace ($phylloNode + \".%s\"); \n" // set curve
+            "connectAttr ($sphere[0] + \".matrix\") ($ins + \".inputHierarchy[0]\"); \n"
+            "connectAttr ($phylloNode + \".%s\") ($ins + \".inputPoints\"); \n"; // connect output
+
+        static char buf[1024];
+        int const write = std::snprintf(buf, sizeof(buf), melCmd,
+            PhyllotaxisNode::nodeName(),
+            PhyllotaxisNode::longName(PhyllotaxisNode::s_curveFuncId),
+            m_func->id(),
+            PhyllotaxisNode::longName(PhyllotaxisNode::s_step),
+            m_ui.integStepDoubleBox->value(),
+            curveObjName.asChar(),
+            PhyllotaxisNode::longName(PhyllotaxisNode::s_curve),
+            PhyllotaxisNode::longName(PhyllotaxisNode::s_output)
+        );
+        MGlobal::displayInfo(buf);
+        if(write < 0) {
+            ERROR_MESSAGE("snprintf failed");
+            return;
+        }
+        status = MGlobal::executeCommand(buf);
+        CHECK(status, (void)0);
     } else {
         MGlobal::displayError("Please Select a NURBS curve first");
     }

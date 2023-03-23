@@ -35,12 +35,16 @@ struct PhyllotaxisGrammar : public Grammar {
 		double const x = m_info.getPoint(m_s).x;
 		double const y = m_info.getPoint(m_s).y;
 
+		double const scale = m_densityFunc(m_s / curveLen);
 		m_turtle
 			.pushState()
-				.forward(y)
-				.rotateRight(90)
-				.forward(x)
-				.drawSphere(m_densityFunc(m_s / curveLen))
+			.forward(y)
+			.rotateRight(90)
+			.forward(x);
+
+		m_result.emplace_back(m_turtle.getPos(), MVector{scale, scale, scale});
+
+		m_turtle
 			.popState()
 			.rollLeft(137.5);
 	}

@@ -1,6 +1,5 @@
 #pragma once
 #include <stdexcept>
-
 #include "ExpressionParser.h"
 
 /**
@@ -14,9 +13,36 @@
  */
 struct UserCurveLenFunction
 {
+private:
+	static inline std::vector<UserCurveLenFunction*> s_objs;
+	static void registerInstance(UserCurveLenFunction* ins) {
+		for (size_t i = 0; i < s_objs.size(); ++i) {
+			if(!s_objs[i]) {
+				s_objs[i] = ins;
+				ins->m_id = static_cast<int>(i);
+			}
+		}
+		ins->m_id = static_cast<int>(s_objs.size());
+		s_objs.push_back(ins);
+	}
+	static void deregisterInstance(UserCurveLenFunction* ins) {
+		s_objs[ins->m_id] = nullptr;
+	}
+
+public:
+	static UserCurveLenFunction* getInstance(int i) {
+		if(i < 0 || i >= s_objs.size()) {
+			return nullptr;
+		}
+		return s_objs[i];
+	}
+
+public:
 	UserCurveLenFunction(std::string expr, bool mirror = false) noexcept
 		: m_mirror(mirror), m_valid(true), m_expr(std::move(expr))
 	{
+		registerInstance(this);
+
 		auto const tokens = ExpressionParser::tokenize(m_expr);
 		if(!tokens) {
 			m_valid = false;
@@ -46,7 +72,9 @@ struct UserCurveLenFunction
 			}
 		}
 	}
-
+	virtual ~UserCurveLenFunction() {
+		deregisterInstance(this);
+	}
 private:
 	double eval(double s) {
 		m_varMap.begin()->second = s;
@@ -85,8 +113,11 @@ public:
 	bool valid() const {
 		return m_valid;
 	}
+	int id() const {
+		return m_id;
+	}
 private:
-
+	int m_id;
 	bool m_mirror;
 	bool m_valid;
 	std::string m_expr;

@@ -2,6 +2,13 @@
 #include <maya/MVector.h>
 #include <maya/MMatrix.h>
 #include <stack>
+#include <vector>
+
+struct GrammarResult {
+	GrammarResult(MVector const& pos, MVector const& scale) : pos(pos), scale(scale) {}
+	MVector pos;
+	MVector scale;
+};
 
 /// <summary>
 /// represents the turtle, the L-System grammar, and the parser all together
@@ -29,11 +36,13 @@ struct Grammar {
 		Turtle& rollRight(double angleDegrees) noexcept;
 		Turtle& pitchUp(double angleDegrees) noexcept;
 		Turtle& pitchDown(double angleDegrees) noexcept;
-
 		Turtle& pushState();
 		Turtle& popState();
 		Turtle& drawSphere(double radius);
 		Turtle& drawCube(MVector const& dimension = {0,0,0});
+
+		MVector getPos() const;
+
 	private:
 		Turtle& doLocalEulerDegrees(double x, double y, double z) noexcept;
 		Turtle& draw(MString const& melCommand);
@@ -62,6 +71,11 @@ struct Grammar {
 			nextIter();
 		}
 	}
+	auto const& result() const {
+		return m_result;
+	}
 protected:
+	std::vector<GrammarResult> m_result;
+
 	Turtle m_turtle;
 };

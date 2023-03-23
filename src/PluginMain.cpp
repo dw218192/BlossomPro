@@ -18,6 +18,8 @@
 #include <QTextStream>
 
 #include "CurveNode.h"
+#include "PhyllotaxisNode.h"
+
 #include "testwindow.h"
 #include "phyllotaxisEditor.h"
 
@@ -28,6 +30,10 @@ static constexpr std::pair<char const*, MCreatorFunction> g_cmds[] = {
     { "unitTest", UnitTestCmd::creator },
     { "createTestWindow", WindowCmd<TestWindow>::creator },
     { "createPhyllotaxisWindow", WindowCmd<PhyllotaxisEditor>::creator }
+};
+static std::tuple<char const*, MTypeId, MCreatorFunction, MInitializeFunction> g_nodes[] = {
+    { PhyllotaxisNode::nodeName(), PhyllotaxisNode::s_id, PhyllotaxisNode::creator, PhyllotaxisNode::initialize },
+    {CurveNode::nodeName(), CurveNode::s_id, CurveNode::creator, CurveNode::initialize }
 };
 
 static void loadAndExecuteMelScript(char const* scriptFileName) {
@@ -54,8 +60,10 @@ MStatus initializePlugin( MObject obj )
     }
 
     // Register Node
-    status = plugin.registerNode("CurveNode", CurveNode::s_id, CurveNode::creator, CurveNode::initialize);
-    CHECK(status, status);
+    for (auto&& [nodeName, id, creator, initializer] : g_nodes) {
+        status = plugin.registerNode(nodeName, id, creator, initializer);
+        CHECK(status, status);
+    }
 
     // init qt resource
     Q_INIT_RESOURCE(resources);
@@ -74,9 +82,10 @@ MStatus uninitializePlugin( MObject obj)
         status = plugin.deregisterCommand(cmdDesc);
         CHECK(status, status);
     }
-
-    status = plugin.deregisterNode(CurveNode::s_id);
-    CHECK(status, status);
+    for (auto&& [nodeName, id, creator, initializer] : g_nodes) {
+        status = plugin.deregisterNode(id);
+        CHECK(status, status);
+    }
 
     loadAndExecuteMelScript("MEL/cleanup.mel");
 

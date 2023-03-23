@@ -14,7 +14,8 @@ catch (std::exception stdex) {\
 }}while(false)
 
 #define MAYA_EXCEPTION(status) MayaErrorException { status, __FILE__, __LINE__ }
-#define CHECK(status, ret) do { if(MFAIL(status)) { MGlobal::displayError((status).errorString()); return (ret); } } while(false)
+#define ERROR_MESSAGE(str) do { MGlobal::displayError(str); MGlobal::displayError(MString{"at line "} + __LINE__ + MString{" of "} + __FILE__); } while(false)
+#define CHECK(status, ret) do { if(MFAIL(status)) { ERROR_MESSAGE((status).errorString()); return (ret); } } while(false)
 
 struct MayaErrorException : public std::exception {
 	MayaErrorException(MStatus const& status, char const* file, int line);

@@ -4,6 +4,9 @@
 class CurveNode : public MPxNode
 {
 public:
+	static constexpr char const* nodeName() {
+		return "CurveNode";
+	}
 	static void* creator();
 	static MStatus initialize();
 	static inline MTypeId s_id{ 0xdead };
@@ -15,5 +18,5 @@ public:
 	CurveNode() = default;
 	~CurveNode() override = default;
 
-	MStatus compute(const MPlug& plug, MDataBlock& data);
+	MStatus compute(const MPlug& plug, MDataBlock& data) override;
 };

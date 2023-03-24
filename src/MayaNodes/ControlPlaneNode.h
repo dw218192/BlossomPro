@@ -28,12 +28,12 @@ public:
 								 std::vector<std::vector<glm::vec3>>& controlPoints);
 
 protected:
-	// record the RowCount and Column before changing
-	int m_PreRC = 2;
-	int m_PreCC = 3;
-
-protected:
-	void UpdateVertices(const int& rowCount, const int& columnCount, std::vector<std::vector<glm::vec3>>& cps,  MPointArray& points);
+	void UpdateVertices(int rowCount, 
+						int columnCount, 
+						int prc, 
+						int pcc, 
+						std::vector<std::vector<glm::vec3>>& cps,  
+						MPointArray& points);
 
 protected:
 	static void ConnectVertices(const int& row, const int& column, MIntArray& faceCounts, MIntArray& faceConnects);
@@ -45,6 +45,9 @@ public:
 
 	static MObject iRowCount;
 	static MObject iColumCount;
+
+	static MObject oPreRC;
+	static MObject oPreCC;
 
 	static MObject iCurrentPlane;
 	static MObject oControlPlane;

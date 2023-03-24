@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>363</width>
+    <width>483</width>
     <height>380</height>
    </rect>
   </property>
@@ -27,6 +27,12 @@
      <width>261</width>
      <height>181</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
   </widget>
   <widget class="QLabel" name="yMinLabel">
@@ -227,7 +233,7 @@
        <set>Qt::ImhNone</set>
       </property>
       <property name="plainText">
-       <string>x</string>
+       <string>-1 * x + 1.2</string>
       </property>
      </widget>
     </item>
@@ -235,6 +241,35 @@
      <widget class="QCheckBox" name="mirrorCheckBox">
       <property name="text">
        <string>mirror</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="verticalLayoutWidget_2">
+   <property name="geometry">
+    <rect>
+     <x>320</x>
+     <y>80</y>
+     <width>101</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
+     <widget class="QLabel" name="minValueLabel">
+      <property name="text">
+       <string>Min Value:</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="maxValueLabel">
+      <property name="text">
+       <string>Max Value:</string>
       </property>
      </widget>
     </item>

@@ -47,8 +47,9 @@ int main()
         doEvalUnknown("2 * 2 * (2 * x + 5) ^ 2", {
 		    {"x", 3}
         });
-        UserCurveLenFunction f {"var"};
-        for (double x = 0; x < 1; x += 0.2) {
+        auto const pf = UserCurveLenFunction::create("x", true);
+        auto& f = *pf;
+    	for (double x = 0; x < 1; x += 0.2) {
             std::cout << f(x) << ' ';
         }
         std::cout << std::endl;

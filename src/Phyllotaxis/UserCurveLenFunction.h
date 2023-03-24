@@ -14,10 +14,11 @@
 struct UserCurveLenFunction
 {
 private:
-	static inline std::vector<UserCurveLenFunction*> s_objs;
-	static void registerInstance(UserCurveLenFunction* ins) {
+	static inline std::vector<std::shared_ptr<UserCurveLenFunction>> s_objs;
+	static void registerInstance(std::shared_ptr<UserCurveLenFunction> const& ins) noexcept {
 		for (size_t i = 0; i < s_objs.size(); ++i) {
-			if(!s_objs[i]) {
+			if(s_objs[i].use_count() == 1) { // no other other than this pool is referencing the object
+				s_objs[i].reset();
 				s_objs[i] = ins;
 				ins->m_id = static_cast<int>(i);
 			}
@@ -25,24 +26,27 @@ private:
 		ins->m_id = static_cast<int>(s_objs.size());
 		s_objs.push_back(ins);
 	}
-	static void deregisterInstance(UserCurveLenFunction* ins) {
-		s_objs[ins->m_id] = nullptr;
-	}
 
 public:
-	static UserCurveLenFunction* getInstance(int i) {
+	static std::shared_ptr<UserCurveLenFunction> create(std::string expr, bool mirror) noexcept {
+		struct EnableMakeShared : public UserCurveLenFunction {
+			EnableMakeShared(std::string expr, bool mirror) : UserCurveLenFunction(std::move(expr), mirror) {}
+		};
+		auto ret = std::make_shared<EnableMakeShared>(expr, mirror);
+		registerInstance(ret);
+		return ret;
+	}
+	static std::shared_ptr<UserCurveLenFunction> getInstance(int i) noexcept {
 		if(i < 0 || i >= s_objs.size()) {
 			return nullptr;
 		}
 		return s_objs[i];
 	}
 
-public:
+private:
 	UserCurveLenFunction(std::string expr, bool mirror = false) noexcept
 		: m_mirror(mirror), m_valid(true), m_expr(std::move(expr))
 	{
-		registerInstance(this);
-
 		auto const tokens = ExpressionParser::tokenize(m_expr);
 		if(!tokens) {
 			m_valid = false;
@@ -72,9 +76,8 @@ public:
 			}
 		}
 	}
-	virtual ~UserCurveLenFunction() {
-		deregisterInstance(this);
-	}
+	UserCurveLenFunction(UserCurveLenFunction&) = delete;
+	UserCurveLenFunction(UserCurveLenFunction&&) = delete;
 private:
 	double eval(double s) {
 		m_varMap.begin()->second = s;

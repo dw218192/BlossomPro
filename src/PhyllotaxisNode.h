@@ -2,6 +2,7 @@
 #include <maya/MPxNode.h>
 #include <memory>
 
+struct UserCurveLenFunction;
 struct PhyllotaxisGrammar;
 
 class PhyllotaxisNode : public MPxNode
@@ -15,7 +16,9 @@ public:
 			return "curve";
 		} else if(&attr == &s_curveFuncId) {
 			return "curveFuncId";
-		} else if(&attr == &s_step) {
+		} else if (&attr == &s_numIter) {
+			return "numIter";
+		} else if (&attr == &s_step) {
 			return "step";
 		} else if(&attr == &s_output) {
 			return "outArr";
@@ -27,6 +30,8 @@ public:
 			return "cv";
 		} else if (&attr == &s_curveFuncId) {
 			return "cfid";
+		} else if (&attr == &s_numIter) {
+			return "ni";
 		} else if (&attr == &s_step) {
 			return "st";
 		} else if (&attr == &s_output) {
@@ -41,6 +46,7 @@ public:
 	static inline MTypeId s_id{ 0xdeae };
 	static inline MObject s_curve;
 	static inline MObject s_curveFuncId; // used to identify an instance of UserCurveLenFunction
+	static inline MObject s_numIter;
 	static inline MObject s_step;
 	static inline MObject s_output;
 
@@ -49,4 +55,7 @@ public:
 	~PhyllotaxisNode() override = default;
 
 	MStatus compute(const MPlug& plug, MDataBlock& data) override;
+
+private:
+	std::unique_ptr<PhyllotaxisGrammar> m_grammar;
 };

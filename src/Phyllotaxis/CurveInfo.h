@@ -8,7 +8,7 @@ struct CurveInfo {
 	CurveInfo() = delete;
 	CurveInfo(CurveInfo&) = delete;
 	CurveInfo(CurveInfo&&) = delete;
-	CurveInfo(MFnNurbsCurve const& curve) : m_curve(curve) { }
+	CurveInfo(MObject const& curveObj, MStatus* status) : m_curve(curveObj, status) { }
 
 	auto getPoint(double s) const -> MVector  {
 		MStatus status;
@@ -32,5 +32,5 @@ struct CurveInfo {
 		return ret;
 	}
 private:
-	MFnNurbsCurve const& m_curve;
+	MFnNurbsCurve m_curve;
 };

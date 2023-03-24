@@ -16,6 +16,8 @@ public:
     bool valid() const;
     auto getYMin() const -> double;
     auto getYMax() const -> double;
+    auto getViewYMin() const -> double;
+    auto getViewYMax() const -> double;
 
 signals:
     void curveUpdated();

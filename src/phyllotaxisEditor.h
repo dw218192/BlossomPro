@@ -16,6 +16,7 @@ public:
 
 private:
     void updateDensityFunc();
+    MStatus updatePhyllotaxisNode();
 
 private slots: //void on_<object name>_<signal name>(<signal parameters>);
     void on_expressionPlainTextEdit_textChanged();
@@ -23,12 +24,15 @@ private slots: //void on_<object name>_<signal name>(<signal parameters>);
     void on_closeBtn_clicked();
     void on_createBtn_clicked();
     void on_mirrorCheckBox_stateChanged(int state);
+    void on_numIterSpinBpx_valueChanged(int value);
+    void on_integStepDoubleBox_valueChanged(double value);
 
 private:
     std::string m_densityFuncExpr;
     bool m_densityFuncMirror;
 
     Ui::PhyllotaxisEditor m_ui;
+    MObject m_phyllotaxisNodeInstance;
     std::shared_ptr<UserCurveLenFunction> m_func;
     std::unique_ptr<PhyllotaxisGrammar> m_grammar;
 };

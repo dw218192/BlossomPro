@@ -105,11 +105,11 @@ auto CurveNode::compute(const MPlug& plug, MDataBlock& data) -> MStatus {
 	MVectorArray positions = arrayAttrsData.vectorArray("position", &status);
 	CHECK(status, status);
 
-	CurveInfo curveInfo{ curve };
-	for(double len = 0.1; len < totalLen; len += step) {
-		HANDLE_EXCEPTION(status = positions.append(curveInfo.getPoint(len)));
-		CHECK(status, status);
-	}
+	//CurveInfo curveInfo{ curve };
+	//for(double len = 0.1; len < totalLen; len += step) {
+	//	HANDLE_EXCEPTION(status = positions.append(curveInfo.getPoint(len)));
+	//	CHECK(status, status);
+	//}
 	MGlobal::displayInfo(MString{"num of instances = "} + positions.length());
 	data.outputValue(CurveNode::s_output).setMObject(aadObj);
 	data.setClean(plug);

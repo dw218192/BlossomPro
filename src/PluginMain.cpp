@@ -31,9 +31,9 @@ static constexpr std::pair<char const*, MCreatorFunction> g_cmds[] = {
     { "createTestWindow", WindowCmd<TestWindow>::creator },
     { "createPhyllotaxisWindow", WindowCmd<PhyllotaxisEditor>::creator }
 };
-static std::tuple<char const*, MTypeId, MCreatorFunction, MInitializeFunction> g_nodes[] = {
-    { PhyllotaxisNode::nodeName(), PhyllotaxisNode::s_id, PhyllotaxisNode::creator, PhyllotaxisNode::initialize },
-    {CurveNode::nodeName(), CurveNode::s_id, CurveNode::creator, CurveNode::initialize }
+static constexpr std::tuple<char const*, MTypeId*, MCreatorFunction, MInitializeFunction> g_nodes[] = {
+    { PhyllotaxisNode::nodeName(), &PhyllotaxisNode::s_id, PhyllotaxisNode::creator, PhyllotaxisNode::initialize },
+    {CurveNode::nodeName(), &CurveNode::s_id, CurveNode::creator, CurveNode::initialize }
 };
 
 static void loadAndExecuteMelScript(char const* scriptFileName) {
@@ -61,7 +61,7 @@ MStatus initializePlugin( MObject obj )
 
     // Register Node
     for (auto&& [nodeName, id, creator, initializer] : g_nodes) {
-        status = plugin.registerNode(nodeName, id, creator, initializer);
+        status = plugin.registerNode(nodeName, *id, creator, initializer);
         CHECK(status, status);
     }
 
@@ -77,13 +77,15 @@ MStatus uninitializePlugin( MObject obj)
     MStatus   status = MStatus::kSuccess;
     MFnPlugin plugin( obj );
 
-    // deregister commands
+    // Deregister commands
     for (auto&& [cmdDesc, func] : g_cmds) {
         status = plugin.deregisterCommand(cmdDesc);
         CHECK(status, status);
     }
+
+    // Deregister nodes
     for (auto&& [nodeName, id, creator, initializer] : g_nodes) {
-        status = plugin.deregisterNode(id);
+        status = plugin.deregisterNode(*id);
         CHECK(status, status);
     }
 

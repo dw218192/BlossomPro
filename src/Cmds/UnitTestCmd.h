@@ -4,7 +4,6 @@
 #include <maya/MPxCommand.h>
 #include <maya/MQtUtil.h>
 
-#include "CurveNode.h"
 #include "Phyllotaxis/Grammar.h"
 #include "Phyllotaxis/PlanarPhyllotaxisGrammar.h"
 

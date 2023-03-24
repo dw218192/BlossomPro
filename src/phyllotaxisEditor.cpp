@@ -1,5 +1,6 @@
 #include "phyllotaxisEditor.h"
-#include "PhyllotaxisNode.h"
+#include "Phyllotaxis/PhyllotaxisNode.h"
+#include "Phyllotaxis/ExpressionCurveLenFunction.h"
 
 #include <maya/MGlobal.h>
 #include <maya/MQtUtil.h>
@@ -10,6 +11,8 @@
 #include <maya/MFnTransform.h>
 
 #include <QSpinbox>
+#
+#include "ExpressionParser.h"
 
 static MStatus createPhyllotaxisNodeInstance(MObject& phyllotaxisNode, MString const& curveName) {
     using pn = PhyllotaxisNode;
@@ -49,19 +52,19 @@ MStatus PhyllotaxisEditor::updatePhyllotaxisNode() {
     MStatus status;
     MFnDependencyNode fnPhyllotaxisNode{ m_phyllotaxisNodeInstance };
 
-    int const curveFuncId = m_func->id();
     int const numIter = m_ui.numIterSpinBpx->value();
     double const step = m_ui.integStepDoubleBox->value();
 
-    MPlug plug = fnPhyllotaxisNode.findPlug(pn::longName(pn::s_curveFuncId), false, &status);
+    MPlug plug = fnPhyllotaxisNode.findPlug(pn::longName(pn::s_serializedCurveFunc), false, &status);
     CHECK(status, status);
     {
-        int test;
+        MString test;
         status = plug.getValue(test);
         CHECK(status, status);
 
-        if (test != curveFuncId) {
-            status = plug.setInt(curveFuncId);
+        std::string const str = m_func->serialize();
+        if (test != str) {
+            status = plug.setString(str.c_str());
             CHECK(status, status);
         }
     }
@@ -97,6 +100,7 @@ MStatus PhyllotaxisEditor::updatePhyllotaxisNode() {
 PhyllotaxisEditor::PhyllotaxisEditor(QWidget* parent) :
     QDialog(parent) {
     m_ui.setupUi(this);
+    setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint);
 
     m_densityFuncExpr = m_ui.expressionPlainTextEdit->toPlainText().toStdString();
 	m_densityFuncMirror = m_ui.mirrorCheckBox->isChecked();
@@ -106,7 +110,7 @@ PhyllotaxisEditor::PhyllotaxisEditor(QWidget* parent) :
 PhyllotaxisEditor::~PhyllotaxisEditor() { }
 
 void PhyllotaxisEditor::updateDensityFunc() {
-    m_func = UserCurveLenFunction::create(m_densityFuncExpr, m_densityFuncMirror);
+    m_func = std::make_shared<ExpressionCurveLenFunction>(m_densityFuncExpr, m_densityFuncMirror);
     if (!m_func->valid()) {
         MGlobal::displayInfo(ExpressionParser::getLastError().c_str());
         m_ui.curveWidget->setCurve(m_func);
@@ -173,39 +177,6 @@ void PhyllotaxisEditor::on_createBtn_clicked() {
         MFnDagNode const dagNode{ dagPath };
         MString const curveObjName = dagNode.name(&status);
         CHECK(status, (void)0);
-
-        if constexpr (false)
-        {
-            CHECK(status, (void)0);
-            static char const* const melCmd =
-                "$phylloNode = `createNode %s`; \n"
-                "$ins = `createNode instancer`; \n"
-                "$sphere = `polySphere`;\n"
-                "setAttr ($phylloNode + \".%s\") %d; \n"  // set num iteration
-                "setAttr ($phylloNode + \".%s\") %d; \n"  // set curve func id
-                "setAttr ($phylloNode + \".%s\") %lf; \n" // set step
-                "connectAttr %s.worldSpace ($phylloNode + \".%s\"); \n" // set curve
-                "connectAttr ($sphere[0] + \".matrix\") ($ins + \".inputHierarchy[0]\"); \n"
-                "connectAttr ($phylloNode + \".%s\") ($ins + \".inputPoints\"); \n"; // connect output
-
-            static char buf[1024];
-            int const write = std::snprintf(buf, sizeof(buf), melCmd,
-                PhyllotaxisNode::nodeName(),
-                PhyllotaxisNode::longName(PhyllotaxisNode::s_numIter), m_ui.numIterSpinBpx->value(),
-                PhyllotaxisNode::longName(PhyllotaxisNode::s_curveFuncId), m_func->id(),
-                PhyllotaxisNode::longName(PhyllotaxisNode::s_step), m_ui.integStepDoubleBox->value(),
-                curveObjName.asChar(),
-                PhyllotaxisNode::longName(PhyllotaxisNode::s_curve),
-                PhyllotaxisNode::longName(PhyllotaxisNode::s_output)
-            );
-            MGlobal::displayInfo(buf);
-            if (write < 0) {
-                ERROR_MESSAGE("snprintf failed");
-                return;
-            }
-            status = MGlobal::executeCommand(buf);
-            CHECK(status, (void)0);
-        }
 
         status = createPhyllotaxisNodeInstance(m_phyllotaxisNodeInstance, curveObjName);
         CHECK(status, (void)0);

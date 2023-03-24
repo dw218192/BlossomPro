@@ -17,8 +17,7 @@
 
 #include <QTextStream>
 
-#include "CurveNode.h"
-#include "PhyllotaxisNode.h"
+#include "Phyllotaxis/PhyllotaxisNode.h"
 
 #include "testwindow.h"
 #include "phyllotaxisEditor.h"
@@ -32,8 +31,7 @@ static constexpr std::pair<char const*, MCreatorFunction> g_cmds[] = {
     { "createPhyllotaxisWindow", WindowCmd<PhyllotaxisEditor>::creator }
 };
 static constexpr std::tuple<char const*, MTypeId*, MCreatorFunction, MInitializeFunction> g_nodes[] = {
-    { PhyllotaxisNode::nodeName(), &PhyllotaxisNode::s_id, PhyllotaxisNode::creator, PhyllotaxisNode::initialize },
-    {CurveNode::nodeName(), &CurveNode::s_id, CurveNode::creator, CurveNode::initialize }
+    { PhyllotaxisNode::nodeName(), &PhyllotaxisNode::s_id, PhyllotaxisNode::creator, PhyllotaxisNode::initialize }
 };
 
 static void loadAndExecuteMelScript(char const* scriptFileName) {

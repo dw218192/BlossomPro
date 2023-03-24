@@ -1,6 +1,6 @@
 #pragma once
-#include <stdexcept>
-#include "ExpressionParser.h"
+#include <maya/MStatus.h>
+#include <string>
 
 /**
  * \brief
@@ -13,116 +13,21 @@
  */
 struct UserCurveLenFunction
 {
-private:
-	static inline std::vector<std::shared_ptr<UserCurveLenFunction>> s_objs;
-	static void registerInstance(std::shared_ptr<UserCurveLenFunction> const& ins) noexcept {
-		for (size_t i = 0; i < s_objs.size(); ++i) {
-			if(s_objs[i].use_count() == 1) { // no other other than this pool is referencing the object
-				s_objs[i].reset();
-				s_objs[i] = ins;
-				ins->m_id = static_cast<int>(i);
-			}
-		}
-		ins->m_id = static_cast<int>(s_objs.size());
-		s_objs.push_back(ins);
-	}
+	static std::shared_ptr<UserCurveLenFunction> deserialize(char const* raw);
 
-public:
-	static std::shared_ptr<UserCurveLenFunction> create(std::string expr, bool mirror) noexcept {
-		struct EnableMakeShared : public UserCurveLenFunction {
-			EnableMakeShared(std::string expr, bool mirror) : UserCurveLenFunction(std::move(expr), mirror) {}
-		};
-		auto ret = std::make_shared<EnableMakeShared>(expr, mirror);
-		registerInstance(ret);
-		return ret;
-	}
-	static std::shared_ptr<UserCurveLenFunction> getInstance(int i) noexcept {
-		if(i < 0 || i >= s_objs.size()) {
-			return nullptr;
-		}
-		return s_objs[i];
-	}
-
-private:
-	UserCurveLenFunction(std::string expr, bool mirror = false) noexcept
-		: m_mirror(mirror), m_valid(true), m_expr(std::move(expr))
-	{
-		auto const tokens = ExpressionParser::tokenize(m_expr);
-		if(!tokens) {
-			m_valid = false;
-			return;
-		}
-		auto const postFix = ExpressionParser::toPostFix(*tokens);
-		if(!postFix) {
-			m_valid = false;
-			return;
-		}
-		int unknownCount = 0;
-		for(auto&& token : *postFix) {
-			if(token->type() == ExpressionParser::Token::Type::variable) {
-				auto const var = std::dynamic_pointer_cast<ExpressionParser::Variable>(token);
-				// if it's not a constant and we have not seen it before
-				if(!var->isConstant() && !m_varMap.count(var->value())) {
-					++unknownCount;
-
-					if (unknownCount > 1) {
-						m_valid = false;
-						m_varMap.clear();
-						return;
-					}
-
-					m_varMap[token->value()];
-				}
-			}
-		}
-	}
+	UserCurveLenFunction() = default;
 	UserCurveLenFunction(UserCurveLenFunction&) = delete;
 	UserCurveLenFunction(UserCurveLenFunction&&) = delete;
-private:
-	double eval(double s) {
-		m_varMap.begin()->second = s;
-		auto const ret = ExpressionParser::evalExpression(m_expr, m_varMap);
-		if (!ret) {
-			throw std::runtime_error{ std::string { "failed to evaluate " } + m_expr };
-		}
-		return *ret;
-	}
-public:
 	/**
 	 * \brief evaluates the user-defined function
 	 * \param s curve length
 	 * \return the function output
 	 */
-	double operator()(double s) {
-		if (!m_valid) {
-			return 0.0;
-		}
-		if (s < 0 || s >= 1.01) {
-			throw std::runtime_error{ std::string { "curve function's domain not in [0,1]" } + m_expr };
-		}
-		double ret;
-		if(m_mirror) {
-			if(s <= 0.5) {
-				ret = eval(s * 2);
-			} else {
-				ret = eval(1 - (s - 0.5) * 2);
-			}
-		} else {
-			ret = eval(s);
-		}
-		return ret;
-	}
+	virtual double operator()(double s) const = 0;
+	virtual bool operator==(UserCurveLenFunction const&) const = 0;
 
-	bool valid() const {
-		return m_valid;
-	}
-	int id() const {
-		return m_id;
-	}
+	virtual bool valid() const = 0;
+	virtual std::string serialize() const = 0;
 private:
-	int m_id;
-	bool m_mirror;
-	bool m_valid;
-	std::string m_expr;
-	std::unordered_map<std::string, double> m_varMap;
+	virtual void deserialize(std::istringstream&) = 0;
 };

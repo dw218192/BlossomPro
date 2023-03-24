@@ -1,5 +1,5 @@
 #pragma once
-#include "Utils.h"
+#include "../Utils.h"
 #include <maya/MFnNurbsCurve.h>
 #include <maya/MPoint.h>
 #include <maya/MVector.h>

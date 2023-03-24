@@ -1,7 +1,7 @@
 #include "PhyllotaxisNode.h"
-#include "Phyllotaxis/UserCurveLenFunction.h"
-#include "Phyllotaxis/PhyllotaxisGrammar.h"
-#include "Utils.h"
+#include "UserCurveLenFunction.h"
+#include "PhyllotaxisGrammar.h"
+#include "../Utils.h"
 #include <maya/MGlobal.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnArrayAttrsData.h>
@@ -27,11 +27,10 @@ MStatus PhyllotaxisNode::initialize() {
 		&status);
 	CHECK(status, status);
 
-	s_curveFuncId = numericAttribute.create(
-		longName(s_curveFuncId),
-		shortName(s_curveFuncId),
-		MFnNumericData::Type::kInt,
-		-1,
+	s_serializedCurveFunc = typedAttribute.create(
+		longName(s_serializedCurveFunc),
+		shortName(s_serializedCurveFunc),
+		MFnData::kString,
 		&status);
 	CHECK(status, status);
 
@@ -63,7 +62,7 @@ MStatus PhyllotaxisNode::initialize() {
 
 	status = addAttribute(s_curve);
 	CHECK(status, status);
-	status = addAttribute(s_curveFuncId);
+	status = addAttribute(s_serializedCurveFunc);
 	CHECK(status, status);
 	status = addAttribute(s_numIter);
 	CHECK(status, status);
@@ -74,7 +73,7 @@ MStatus PhyllotaxisNode::initialize() {
 
 	status = attributeAffects(s_curve, s_output);
 	CHECK(status, status);
-	status = attributeAffects(s_curveFuncId, s_output);
+	status = attributeAffects(s_serializedCurveFunc, s_output);
 	CHECK(status, status);
 	status = attributeAffects(s_numIter, s_output);
 	CHECK(status, status);
@@ -98,11 +97,14 @@ MStatus PhyllotaxisNode::compute(const MPlug& plug, MDataBlock& data) {
 	int const numIter = data.inputValue(s_numIter, &status).asInt();
 	CHECK(status, status);
 
-	int const curveFuncId = data.inputValue(s_curveFuncId, &status).asInt();
+	MString const serializedCurve = data.inputValue(s_serializedCurveFunc, &status).asString();
 	CHECK(status, status);
 
-	auto curveFunc = UserCurveLenFunction::getInstance(curveFuncId);
-	if(!curveFunc || !curveFunc->valid()) {
+	if(!m_curveFunc || m_curveFunc->serialize() != serializedCurve) {
+		m_curveFunc = UserCurveLenFunction::deserialize(serializedCurve.asChar());
+	}
+
+	if(!m_curveFunc || !m_curveFunc->valid()) {
 		ERROR_MESSAGE("curveFunc is not set or valid");
 		return MStatus::kInvalidParameter;
 	}
@@ -112,9 +114,8 @@ MStatus PhyllotaxisNode::compute(const MPlug& plug, MDataBlock& data) {
 	auto curveInfo = std::make_unique<CurveInfo>(curveObj, &status);
 	CHECK(status, status);
 
-	m_grammar = std::make_unique<PhyllotaxisGrammar>(std::move(curveInfo), curveFunc, step);
+	m_grammar = std::make_unique<PhyllotaxisGrammar>(std::move(curveInfo), m_curveFunc, step);
 	m_grammar->process(numIter);
-
 
 	MFnArrayAttrsData arrayAttrsData;
 

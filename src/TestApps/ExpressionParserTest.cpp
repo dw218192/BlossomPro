@@ -1,7 +1,7 @@
 #include <cassert>
 #include <iostream>
 #include "ExpressionParser.h"
-#include "../Phyllotaxis/UserCurveLenFunction.h"
+
 using namespace ExpressionParser;
 int main()
 {
@@ -47,12 +47,6 @@ int main()
         doEvalUnknown("2 * 2 * (2 * x + 5) ^ 2", {
 		    {"x", 3}
         });
-        auto const pf = UserCurveLenFunction::create("x", true);
-        auto& f = *pf;
-    	for (double x = 0; x < 1; x += 0.2) {
-            std::cout << f(x) << ' ';
-        }
-        std::cout << std::endl;
 
     } catch(std::exception& ex) {
         std::cerr << ex.what() << std::endl;

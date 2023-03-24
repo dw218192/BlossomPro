@@ -8,6 +8,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(PROJECT_NAME "BlossomPro")
 project (${PROJECT_NAME} CXX)
 
+# Set a default build type if none was specified
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    SET(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+    # Set the possible values of build type for cmake-gui
+    SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
+endif()
+
 # main lib srcs
 file(GLOB EXPRESSION_PARSER_SRCS "src/ExpressionParser/*.cpp")
 file(GLOB PHYLLOTAXIS_SRCS "src/Phyllotaxis/*.cpp" "src/Phyllotaxis/*.h")
@@ -28,7 +35,13 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # main plugin srcs
-file(GLOB SOURCE_FILES ${SOURCE_FILES} "src/*.cpp" "src/*.h" "src/Cmds/*.cpp" "src/Widgets/*.cpp")
+file(GLOB SOURCE_FILES ${SOURCE_FILES} 
+	"src/*.cpp" 
+	"src/*.h"
+	"src/Cmds/*.cpp" 
+	"src/Widgets/*.cpp"
+	"src/MayaNodes/*.cpp"
+)
 
 # test app srcs
 file(GLOB EXPRESSION_TEST_SRCS "src/TestApps/*.cpp")
@@ -105,6 +118,8 @@ target_sources(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} 
 	PUBLIC
 		${AUTOGEN_BUILD_DIR}
+		${GLM_INCLUDE}
+		${BSPLINE_SURFACE_INCLUDE}
 	PRIVATE
 		${PROJECT_SOURCE_DIR}/include
 )
@@ -115,9 +130,13 @@ if (MSVC)
 endif ()
 
 # link our libs
-target_link_libraries (${PROJECT_NAME} PhyllotaxisGenerator)
+target_link_libraries (${PROJECT_NAME} 
+	PhyllotaxisGenerator
+	BSplineSurface
+)
+
 # link qt
 target_link_libraries (${PROJECT_NAME} Qt5::Widgets Qt5::Gui Qt5::OpenGL Qt5::Core)
 # link openGL
 find_package(OpenGL REQUIRED)
-target_link_libraries (${PROJECT_NAME} opengl32)
+target_link_libraries (${PROJECT_NAME} OpenGL::GL)

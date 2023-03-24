@@ -25,13 +25,18 @@
 #include "Cmds/UnitTestCmd.h"
 #include "Cmds/WindowCmd.h"
 
+#include "MayaNodes/ControlPlaneNode.h"
+#include "MayaNodes/BSPlineSurfaceNode.h"
+
 static constexpr std::pair<char const*, MCreatorFunction> g_cmds[] = {
     { "unitTest", UnitTestCmd::creator },
     { "createTestWindow", WindowCmd<TestWindow>::creator },
     { "createPhyllotaxisWindow", WindowCmd<PhyllotaxisEditor>::creator }
 };
 static constexpr std::tuple<char const*, MTypeId*, MCreatorFunction, MInitializeFunction> g_nodes[] = {
-    { PhyllotaxisNode::nodeName(), &PhyllotaxisNode::s_id, PhyllotaxisNode::creator, PhyllotaxisNode::initialize }
+    { PhyllotaxisNode::nodeName(), &PhyllotaxisNode::s_id, PhyllotaxisNode::creator, PhyllotaxisNode::initialize },
+    { ControlPlaneNode::nodeName(), &ControlPlaneNode::id, ControlPlaneNode::creator, ControlPlaneNode::initialize },
+    { BSplineSurfaceNode::nodeName(), &BSplineSurfaceNode::id, BSplineSurfaceNode::creator, BSplineSurfaceNode::initialize}
 };
 
 static void loadAndExecuteMelScript(char const* scriptFileName) {

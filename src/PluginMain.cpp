@@ -27,6 +27,7 @@
 
 #include "MayaNodes/ControlPlaneNode.h"
 #include "MayaNodes/BSPlineSurfaceNode.h"
+#include "MayaNodes/CurveNode.h"
 
 static constexpr std::pair<char const*, MCreatorFunction> g_cmds[] = {
     { "unitTest", UnitTestCmd::creator },
@@ -34,6 +35,7 @@ static constexpr std::pair<char const*, MCreatorFunction> g_cmds[] = {
     { "createPhyllotaxisWindow", WindowCmd<PhyllotaxisEditor>::creator }
 };
 static constexpr std::tuple<char const*, MTypeId*, MCreatorFunction, MInitializeFunction> g_nodes[] = {
+    { CurveNode::nodeName(), &CurveNode::s_id, CurveNode::creator, CurveNode::initialize },
     { PhyllotaxisNode::nodeName(), &PhyllotaxisNode::s_id, PhyllotaxisNode::creator, PhyllotaxisNode::initialize },
     { ControlPlaneNode::nodeName(), &ControlPlaneNode::id, ControlPlaneNode::creator, ControlPlaneNode::initialize },
     { BSplineSurfaceNode::nodeName(), &BSplineSurfaceNode::id, BSplineSurfaceNode::creator, BSplineSurfaceNode::initialize}
@@ -61,7 +63,6 @@ MStatus initializePlugin( MObject obj )
         status = plugin.registerCommand(cmdDesc, func);
         CHECK(status, status);
     }
-
     // Register Node
     for (auto&& [nodeName, id, creator, initializer] : g_nodes) {
         status = plugin.registerNode(nodeName, *id, creator, initializer);
@@ -85,7 +86,6 @@ MStatus uninitializePlugin( MObject obj)
         status = plugin.deregisterCommand(cmdDesc);
         CHECK(status, status);
     }
-
     // Deregister nodes
     for (auto&& [nodeName, id, creator, initializer] : g_nodes) {
         status = plugin.deregisterNode(*id);

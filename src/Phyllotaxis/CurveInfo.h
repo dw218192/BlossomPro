@@ -12,7 +12,7 @@ struct CurveInfo {
 
 	auto getPoint(double s) const -> MVector  {
 		MStatus status;
-		double const param = m_curve.findParamFromLength(s, 0.01, &status);
+		double const param = m_curve.findParamFromLength(s, kMFnNurbsEpsilon, &status);
 		if (MFAIL(status)) {
 			throw MAYA_EXCEPTION(status);
 		}

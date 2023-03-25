@@ -1,5 +1,6 @@
 #pragma once
 #include <maya/MPxCommand.h>
+#include <maya/MQtUtil.h>
 #include <QDialog>
 #include <type_traits>
 #include <maya/MGlobal.h>
@@ -11,7 +12,7 @@ struct WindowCmd : public MPxCommand {
 	auto doIt(const MArgList& args)->MStatus override {
 		try {
 			if (!m_window) {
-				m_window = new T{ nullptr };
+				m_window = new T{ nullptr }; //MQtUtil::mainWindow()
 				m_window->open();
 			} else {
 				m_window->setVisible(true);

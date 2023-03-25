@@ -29,9 +29,10 @@ static MStatus createPhyllotaxisNodeInstance(MObject& phyllotaxisNode, MString c
         "connectAttr %s.worldSpace %s.%s; \n"
         "$ins = `createNode instancer`; \n"
         "$sphere = `polySphere`;\n"
+		"setAttr ($sphere[0] + \".visibility\") 0;\n" // hide the sphere
         "connectAttr ($sphere[0] + \".matrix\") ($ins + \".inputHierarchy[0]\"); \n"
         "connectAttr %s.%s ($ins + \".inputPoints\"); \n"; // connect output
-    static char buf[256];
+    static char buf[512];
     int const check = std::snprintf(buf, sizeof(buf), melCmdFmt,
         curveName.asChar(), fnPhyllotaxisNode.name().asChar(), pn::longName(pn::s_curve),
         fnPhyllotaxisNode.name().asChar(), pn::longName(pn::s_output)
@@ -40,6 +41,8 @@ static MStatus createPhyllotaxisNodeInstance(MObject& phyllotaxisNode, MString c
         ERROR_MESSAGE("snprintf failed");
         return MStatus::kFailure;
     }
+
+    MGlobal::displayInfo(buf);
     status = MGlobal::executeCommand(buf);
     CHECK(status, status);
 
@@ -100,7 +103,9 @@ MStatus PhyllotaxisEditor::updatePhyllotaxisNode() {
 PhyllotaxisEditor::PhyllotaxisEditor(QWidget* parent) :
     QDialog(parent) {
     m_ui.setupUi(this);
-    setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint);
+
+    setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint | Qt::WindowStaysOnTopHint);
+    setWindowModality(Qt::NonModal);
 
     m_densityFuncExpr = m_ui.expressionPlainTextEdit->toPlainText().toStdString();
 	m_densityFuncMirror = m_ui.mirrorCheckBox->isChecked();

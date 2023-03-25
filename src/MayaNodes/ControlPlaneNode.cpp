@@ -37,6 +37,9 @@ MTypeId ControlPlaneNode::id(0x80001);
 MObject ControlPlaneNode::iRowCount;
 MObject ControlPlaneNode::iColumCount;
 
+MObject ControlPlaneNode::oPreRC;
+MObject ControlPlaneNode::oPreCC;
+
 MObject ControlPlaneNode::iCurrentPlane;
 MObject ControlPlaneNode::oControlPlane;
 
@@ -46,9 +49,9 @@ MObject ControlPlaneNode::oControlPlane;
                          attr.setWritable(true);
 
 #define MAKE_OUT(attr)   attr.setKeyable(false);\
-                         attr.setStorable(false);\
-                         attr.setReadable(true);\
-                         attr.setWritable(false);
+                         attr.setStorable(true);\
+                         attr.setReadable(true);
+                         //attr.setWritable(false);
 
 #define Index(h_size, w, h) ((h_size) * (w) + (h))
 #define Lerp(a, b, t) ((1.f - (t)) * (a) + (t) * (b))
@@ -187,6 +190,16 @@ MStatus ControlPlaneNode::initialize()
     MAKE_INPUT(nAttr)
     addAttribute(ControlPlaneNode::iColumCount);
 
+    // output data
+    ControlPlaneNode::oPreRC = nAttr.create("PreviousRC", "prc", MFnNumericData::kInt, defaultRC);
+    MAKE_INPUT(nAttr)
+    addAttribute(ControlPlaneNode::oPreRC);
+
+    // output data
+    ControlPlaneNode::oPreCC = nAttr.create("PreviousCC", "pcc", MFnNumericData::kInt, defaultCC);
+    MAKE_INPUT(nAttr)
+    addAttribute(ControlPlaneNode::oPreCC);
+
     // output geometry
     ControlPlaneNode::iCurrentPlane = tAttr.create("CurrentPlane", "curp", MFnData::kMesh, &returnStatus);
     MAKE_INPUT(tAttr)
@@ -215,8 +228,18 @@ MStatus ControlPlaneNode::compute(const MPlug& plug, MDataBlock& data)
         MDataHandle ccaData = data.inputValue(ControlPlaneNode::iColumCount, &returnStatus);
         int columnCount = ccaData.asInt();
 
+        MDataHandle prcData = data.outputValue(ControlPlaneNode::oPreRC, &returnStatus);
+        int prc = prcData.asInt();
+        MDataHandle pccData = data.outputValue(ControlPlaneNode::oPreCC, &returnStatus);
+        int pcc = pccData.asInt();
+        
+        if (prc == rowCount && pcc == columnCount)
+        {
+            return MS::kSuccess;
+        }
+
         // clear tweak of mesh
-        if (plug.isConnected()) 
+        if (plug.isConnected())
         {
 
             MDataHandle planeData = data.inputValue(ControlPlaneNode::iCurrentPlane, &returnStatus);
@@ -232,13 +255,13 @@ MStatus ControlPlaneNode::compute(const MPlug& plug, MDataBlock& data)
             MItMeshVertex vertexIter(dummyDagPath);
             vertexIter.reset(controlPlane);
             std::vector<std::vector<glm::vec3>> controlPoints;
-            GetControlPoints(m_PreRC, m_PreCC, vertexIter, controlPoints);
+            GetControlPoints(prc, pcc, vertexIter, controlPoints);
 
             // compute new control plane (initial state) with new row & column count
             InitPlane(rowCount, columnCount, initPoints, returnStatus);
 
             // compute the new control plane (with offset) after interpolation
-            UpdateVertices(rowCount << 1, columnCount, controlPoints, points);
+            UpdateVertices(rowCount << 1, columnCount, prc << 1, pcc, controlPoints, points);
 
             // setup face connections with new row & column count
             ConnectVertices(rowCount << 1, columnCount, faceCounts, faceConnects);
@@ -249,6 +272,7 @@ MStatus ControlPlaneNode::compute(const MPlug& plug, MDataBlock& data)
             MObject newMesh = MFnMesh().create(initPoints.length(), faceCounts.length(), initPoints, faceCounts, faceConnects, newOutputData, &returnStatus);
             MDataHandle outputPlaneData = data.outputValue(ControlPlaneNode::oControlPlane, &returnStatus);
             outputPlaneData.set(newOutputData);
+            outputPlaneData.setClean();
 
             // TODO: move to a function
             // set pnts for output mesh
@@ -260,7 +284,7 @@ MStatus ControlPlaneNode::compute(const MPlug& plug, MDataBlock& data)
             name.split('.', strArr);
             MString templateStr = R"(setAttr("^1s.pnts[^2s]") - type "float3" ^3s;)";
             int count = ((rowCount << 1) + 1) * (columnCount + 1) + 1;
-
+            
             for (int i = 0; i < count; ++i)
             {
                 MPoint p = points[i] - initPoints[i];
@@ -277,13 +301,15 @@ MStatus ControlPlaneNode::compute(const MPlug& plug, MDataBlock& data)
                 MString cmd;
                 cmd.format(templateStr, strArr[0], id, pos);
 
+                MGlobal::displayInfo(cmd);
                 MGlobal::executeCommand(cmd);
             }
         }
-
         // upadte preRC and preCC
-        m_PreRC = rowCount;
-        m_PreCC = columnCount;
+        prcData.setInt(rowCount);
+        pccData.setInt(columnCount);
+        prcData.setClean();
+        pccData.setClean();
 
         data.setClean(plug);
     }
@@ -299,7 +325,12 @@ glm::vec3 interpolate(glm::vec3 a, glm::vec3 b, glm::vec3 c, glm::vec3 d, glm::v
     return glm::mix(p1, p2, glm::vec3(t.y));
 }
 
-void ControlPlaneNode::UpdateVertices(const int& rowCount, const int& columnCount, std::vector<std::vector<glm::vec3>>& cps, MPointArray& points)
+void ControlPlaneNode::UpdateVertices(int rowCount,
+                                      int columnCount,
+                                      int prc,
+                                      int pcc,
+                                      std::vector<std::vector<glm::vec3>>& cps,
+                                      MPointArray& points)
 {
     points.clear();
     glm::vec3 pt;
@@ -307,10 +338,10 @@ void ControlPlaneNode::UpdateVertices(const int& rowCount, const int& columnCoun
     {
         for (int v = 0; v <= columnCount; ++v)
         {
-            float x = glm::mix(0.f, static_cast<float>(m_PreCC), static_cast<float>(v) / static_cast<float>(columnCount));
-            float y = glm::mix(0.f, static_cast<float>(m_PreRC << 1), static_cast<float>(u) / static_cast<float>(rowCount));
-            int ix = glm::floor(x);
-            int iy = glm::floor(y);
+            float x = glm::mix(0.f, static_cast<float>(pcc), static_cast<float>(v) / static_cast<float>(columnCount));
+            float y = glm::mix(0.f, static_cast<float>(prc), static_cast<float>(u) / static_cast<float>(rowCount));
+            int ix = static_cast<int>(glm::floor(x));
+            int iy = static_cast<int>(glm::floor(y));
             int bx = ix + 1;
             int cy = iy + 1;
             int dx = ix + 1;

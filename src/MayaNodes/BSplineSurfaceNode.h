@@ -17,7 +17,11 @@ public:
 	virtual MStatus compute(const MPlug& plug, MDataBlock& data);
 
 private:
-	void MakeMesh(std::vector<std::vector<glm::vec3>>& controlPoints, MObject& meshData, MStatus& status);
+	void MakeMesh(std::vector<std::vector<glm::vec3>>& controlPoints, 
+				  int subdivisionWidth, 
+				  int subdivisionHeight,
+				  MObject& meshData, 
+				  MStatus& status);
 
 public:
 	static MTypeId  id;

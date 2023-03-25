@@ -1,0 +1,19 @@
+$CPTrans = `createNode transform -n BSSControlPlane`;
+$CPMesh = `createNode mesh -p $CPTrans`;
+sets -add initialShadingGroup $CPMesh;
+$CPNode = `createNode ControlPlaneNode`;
+connectAttr ($CPMesh + ".outMesh") ($CPNode + ".curp");
+connectAttr ($CPNode + ".cp") ($CPMesh + ".inMesh");
+setAttr ($CPNode + ".rc") {};
+setAttr ($CPNode + ".cc") {};
+
+$BSSTrans = `createNode transform -n BSplineSurface`;
+$BSSMesh = `createNode mesh -p $BSSTrans`;
+sets -add initialShadingGroup $BSSMesh;
+$BSSNode = `createNode BSplineSurfaceNode`;
+connectAttr ($CPNode + ".rc") ($BSSNode + ".cpsw");
+connectAttr ($CPNode + ".cc") ($BSSNode + ".cpsh");
+connectAttr ($CPMesh + ".outMesh") ($BSSNode + ".cp");
+connectAttr ($BSSNode + ".OSurface") ($BSSMesh + ".inMesh");
+setAttr ($BSSNode + ".sw") {};
+setAttr ($BSSNode + ".sh") {};

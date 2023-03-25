@@ -2,5 +2,6 @@
   <qresource prefix="MEL">
     <file>cleanup.mel</file>
     <file>startup.mel</file>
+    <file>createBSplineSurface.mel</file>
   </qresource>
 </RCC>

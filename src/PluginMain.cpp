@@ -21,6 +21,7 @@
 
 #include "testwindow.h"
 #include "phyllotaxisEditor.h"
+#include "CreateBSplineSurfaceWindow.h"
 
 #include "Cmds/UnitTestCmd.h"
 #include "Cmds/WindowCmd.h"
@@ -32,7 +33,8 @@
 static constexpr std::pair<char const*, MCreatorFunction> g_cmds[] = {
     { "unitTest", UnitTestCmd::creator },
     { "createTestWindow", WindowCmd<TestWindow>::creator },
-    { "createPhyllotaxisWindow", WindowCmd<PhyllotaxisEditor>::creator }
+    { "createPhyllotaxisWindow", WindowCmd<PhyllotaxisEditor>::creator },
+    { "createBSplineSurfaceWindow", WindowCmd<CreateBSplineSurfaceWindow>::creator }
 };
 static constexpr std::tuple<char const*, MTypeId*, MCreatorFunction, MInitializeFunction> g_nodes[] = {
     { CurveNode::nodeName(), &CurveNode::s_id, CurveNode::creator, CurveNode::initialize },

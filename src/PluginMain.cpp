@@ -27,6 +27,7 @@
 #include "Cmds/WindowCmd.h"
 
 #include "MayaNodes/ControlPlaneNode.h"
+#include "MayaNodes/CPPassthroughNode.h"
 #include "MayaNodes/BSPlineSurfaceNode.h"
 #include "MayaNodes/CurveNode.h"
 
@@ -39,8 +40,9 @@ static constexpr std::pair<char const*, MCreatorFunction> g_cmds[] = {
 static constexpr std::tuple<char const*, MTypeId*, MCreatorFunction, MInitializeFunction> g_nodes[] = {
     { CurveNode::nodeName(), &CurveNode::s_id, CurveNode::creator, CurveNode::initialize },
     { PhyllotaxisNode::nodeName(), &PhyllotaxisNode::s_id, PhyllotaxisNode::creator, PhyllotaxisNode::initialize },
-    { ControlPlaneNode::nodeName(), &ControlPlaneNode::id, ControlPlaneNode::creator, ControlPlaneNode::initialize },
-    { BSplineSurfaceNode::nodeName(), &BSplineSurfaceNode::id, BSplineSurfaceNode::creator, BSplineSurfaceNode::initialize}
+    { BSplineSurfaceNode::ControlPlaneNode::nodeName(), &BSplineSurfaceNode::ControlPlaneNode::id, BSplineSurfaceNode::ControlPlaneNode::creator, BSplineSurfaceNode::ControlPlaneNode::initialize },
+    { BSplineSurfaceNode::CPPassthroughNode::nodeName(), &BSplineSurfaceNode::CPPassthroughNode::id, BSplineSurfaceNode::CPPassthroughNode::creator, BSplineSurfaceNode::CPPassthroughNode::initialize },
+    { BSplineSurfaceNode::BSplineSurfaceNode::nodeName(), &BSplineSurfaceNode::BSplineSurfaceNode::id, BSplineSurfaceNode::BSplineSurfaceNode::creator, BSplineSurfaceNode::BSplineSurfaceNode::initialize}
 };
 
 static void loadAndExecuteMelScript(char const* scriptFileName) {

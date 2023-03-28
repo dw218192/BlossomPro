@@ -8,39 +8,41 @@
 #include <maya/MStatus.h>
 #include <maya/MObject.h>
 
-class BSplineSurfaceNode : public MPxNode
+namespace BSplineSurfaceNode
 {
-public:
-	BSplineSurfaceNode() {}
-	virtual ~BSplineSurfaceNode() = default;
+	class BSplineSurfaceNode : public MPxNode
+	{
+	public:
+		BSplineSurfaceNode() {}
+		virtual ~BSplineSurfaceNode() = default;
 
-	virtual MStatus compute(const MPlug& plug, MDataBlock& data);
+		virtual MStatus compute(const MPlug& plug, MDataBlock& data);
 
-private:
-	void MakeMesh(std::vector<std::vector<glm::vec3>>& controlPoints, 
-				  int subdivisionWidth, 
-				  int subdivisionHeight,
-				  MObject& meshData, 
-				  MStatus& status);
+	private:
+		void MakeMesh(std::vector<std::vector<glm::vec3>>& controlPoints,
+			int subdivisionWidth,
+			int subdivisionHeight,
+			MObject& meshData,
+			MStatus& status);
 
-public:
-	static MTypeId  id;
+	public:
+		static MTypeId  id;
 
-	static MObject inSW;
-	static MObject inSH;
+		static MObject inSW;
+		static MObject inSH;
 
-	static  MObject controlPlane;
-	static  MObject inCPSW;
-	static  MObject inCPSH;
+		static  MObject controlPlane;
+		static  MObject inCPSW;
+		static  MObject inCPSH;
 
-	static  MObject outSurface;
+		static  MObject outSurface;
 
-public:
-	static constexpr char const* nodeName() {
-		return "BSplineSurfaceNode";
-	}
+	public:
+		static constexpr char const* nodeName() {
+			return "BSplineSurfaceNode";
+		}
 
-	static  void* creator();
-	static  MStatus initialize();
-};
-
+		static  void* creator();
+		static  MStatus initialize();
+	};
+}

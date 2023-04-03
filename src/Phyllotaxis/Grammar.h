@@ -42,7 +42,7 @@ struct Grammar {
 		Turtle& drawCube(MVector const& dimension = {0,0,0});
 
 		MVector getPos() const;
-
+		MEulerRotation getRot() const;
 	private:
 		Turtle& doLocalEulerDegrees(double x, double y, double z) noexcept;
 		Turtle& draw(MString const& melCommand);

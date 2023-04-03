@@ -120,3 +120,30 @@ MVector Grammar::Turtle::getPos() const {
 	}
 	return ret;
 }
+
+MEulerRotation Grammar::Turtle::getRot() const {
+	MTransformationMatrix::RotationOrder order;
+	double eulers[3];
+	MStatus status = MTransformationMatrix{ m_transform }.getRotation(eulers, order);
+	if (MFAIL(status)) {
+		throw MAYA_EXCEPTION(status);
+	}
+
+	MEulerRotation::RotationOrder const eulerOrder = [order]() {
+		switch (order) {
+#define CASE(type) case MTransformationMatrix::RotationOrder::type:\
+			return MEulerRotation::RotationOrder::type
+			CASE(kXYZ);
+			CASE(kYZX);
+			CASE(kZXY);
+			CASE(kXZY);
+			CASE(kYXZ);
+			CASE(kZYX);
+		default:
+			throw std::runtime_error{ std::string { "invalid rotation order " } +
+				MTransformationMatrix::RotationOrder_EnumDef::raw_name(order) };
+#undef CASE
+		}
+	}();
+	return MEulerRotation{ eulers[0], eulers[1], eulers[2], eulerOrder };
+}

@@ -118,6 +118,7 @@ target_link_libraries(WidgetTest
 # test BSplineSurface
 # set vars for freeglut
 set(FREEGLUT_BUILD_SHARED_LIBS ON)
+set(FREEGLUT_BUILD_DEMOS OFF)
 add_subdirectory(${GLUT_DIR})
 
 add_executable(TestBSplineSurface ${BSPLINE_SURF_TEST_SRCS})
@@ -163,9 +164,9 @@ target_include_directories(${PROJECT_NAME}
 	PUBLIC
 		${AUTOGEN_BUILD_DIR}
 		${GLM_INCLUDE}
-		${BSPLINE_SURFACE_INCLUDE}
-		${SRC_ROOT}
+		${BSPLINE_SURFACE_INCLUDE}	
 	PRIVATE
+		${SRC_ROOT}
 		${PROJECT_SOURCE_DIR}/include
 )
 

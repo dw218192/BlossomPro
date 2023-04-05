@@ -29,6 +29,7 @@
 #include "MayaNodes/ControlPlaneNode.h"
 #include "MayaNodes/BSPlineSurfaceNode.h"
 #include "MayaNodes/CurveNode.h"
+#include "MayaNodes/CurveInstanceNode.h"
 
 static constexpr std::pair<char const*, MCreatorFunction> g_cmds[] = {
     { "unitTest", UnitTestCmd::creator },
@@ -40,7 +41,8 @@ static constexpr std::tuple<char const*, MTypeId*, MCreatorFunction, MInitialize
     { CurveNode::nodeName(), &CurveNode::s_id, CurveNode::creator, CurveNode::initialize },
     { PhyllotaxisNode::nodeName(), &PhyllotaxisNode::s_id, PhyllotaxisNode::creator, PhyllotaxisNode::initialize },
     { ControlPlaneNode::nodeName(), &ControlPlaneNode::id, ControlPlaneNode::creator, ControlPlaneNode::initialize },
-    { BSplineSurfaceNode::nodeName(), &BSplineSurfaceNode::id, BSplineSurfaceNode::creator, BSplineSurfaceNode::initialize}
+    { BSplineSurfaceNode::nodeName(), &BSplineSurfaceNode::id, BSplineSurfaceNode::creator, BSplineSurfaceNode::initialize},
+    { CurveInstanceNode::nodeName(), &CurveInstanceNode::id, CurveInstanceNode::creator, CurveInstanceNode::initialize}
 };
 
 static void loadAndExecuteMelScript(char const* scriptFileName) {

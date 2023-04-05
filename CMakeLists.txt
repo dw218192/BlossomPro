@@ -25,6 +25,7 @@ file(GLOB RESOURCE_FILES "res/*.qrc")
 # external sources
 set(EXT_DIR "ext")
 set(GLUT_DIR ${EXT_DIR}/freeglut-3.2.2)
+set(SRC_ROOT "src")
 set(LIBSPLINE_DIR ${EXT_DIR}/libspline)
 
 # set additional include dir
@@ -163,6 +164,7 @@ target_include_directories(${PROJECT_NAME}
 		${AUTOGEN_BUILD_DIR}
 		${GLM_INCLUDE}
 		${BSPLINE_SURFACE_INCLUDE}
+		${SRC_ROOT}
 	PRIVATE
 		${PROJECT_SOURCE_DIR}/include
 )

@@ -12,15 +12,13 @@ class KeyframeCurveWidget : public QOpenGLWidget, protected QOpenGLFunctions {
     Q_OBJECT
 
 private:
-    int m_axis;
-    glm::vec3 m_CameraPos;
+    glm::vec2 m_viewMax;
+    glm::vec2 m_camPos;
+    glm::vec2 m_lastPos;
 
-    static const int Z_VALUE = -10;
-    static const int CAMERA_D = 1;
-    static const int Y_FACTOR = 1;
-    static const float MY_PI;
+    glm::vec2 m_camViewScale;
 
-    QPoint lastPos;
+
 
     int ctrlSelected;
 
@@ -38,20 +36,22 @@ public:
     void setCurrentSelected(int index);
 
 private:
-    void renderText(GLdouble x, GLdouble y, GLdouble z, QString text);
+    void renderText(glm::ivec2 screenPos, QString text);
     void drawGrid();
     void drawSpline();
 
-    aaAaa::Vector2 screen2gl(int x, int y);
+    glm::vec2 screen2world(glm::ivec2 screenPos);
+    glm::ivec2 world2screen(glm::vec2 world);
+
     int checkSelected(aaAaa::Vector2 point);
 
 protected:
     void initializeGL() override;
     void paintGL() override;
     void resizeGL(int width, int height) override;
-    //void mousePressEvent(QMouseEvent* event) override;
-    //void mouseReleaseEvent(QMouseEvent* event) override;
-    //void mouseMoveEvent(QMouseEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent*) override;
 
 signals:

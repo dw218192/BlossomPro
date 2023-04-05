@@ -36,7 +36,7 @@ struct Grammar {
 		Turtle& rollRight(double angleDegrees) noexcept;
 		Turtle& pitchUp(double angleDegrees) noexcept;
 		Turtle& pitchDown(double angleDegrees) noexcept;
-		Turtle& pushState();
+		Turtle& pushState() noexcept;
 		Turtle& popState();
 		Turtle& drawSphere(double radius);
 		Turtle& drawCube(MVector const& dimension = {0,0,0});

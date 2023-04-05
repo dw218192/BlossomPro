@@ -17,6 +17,7 @@ endif()
 
 # main lib srcs
 file(GLOB EXPRESSION_PARSER_SRCS "src/ExpressionParser/*.cpp")
+file(GLOB WIDGET_SRCS "src/Widgets/*.cpp")
 file(GLOB PHYLLOTAXIS_SRCS "src/Phyllotaxis/*.cpp" "src/Phyllotaxis/*.h")
 file(GLOB BSPLINE_SURFACE_SRCS "src/BSplineSurface/*.cpp" "src/BSplineSurface/*.h")
 file(GLOB RESOURCE_FILES "res/*.qrc")
@@ -24,11 +25,13 @@ file(GLOB RESOURCE_FILES "res/*.qrc")
 # external sources
 set(EXT_DIR "ext")
 set(GLUT_DIR ${EXT_DIR}/freeglut-3.2.2)
+set(LIBSPLINE_DIR ${EXT_DIR}/libspline)
 
 # set additional include dir
 set(GLM_INCLUDE "${EXT_DIR}/glm/include")
 set(GLUT_INCLUDE "${GLUT_DIR}/include")
 set(BSPLINE_SURFACE_INCLUDE "src/BSplineSurface/")
+set(LIBSPLINE_INCLUDE "${LIBSPLINE_DIR}")
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -44,8 +47,9 @@ file(GLOB SOURCE_FILES ${SOURCE_FILES}
 )
 
 # test app srcs
-file(GLOB EXPRESSION_TEST_SRCS "src/TestApps/*.cpp")
-file(GLOB BSPLINE_SURF_TEST_SRCS "src/TestBSplineSurface/main.cpp")
+file(GLOB EXPRESSION_TEST_SRCS "src/TestExpressionParser/*.cpp")
+file(GLOB WIDGET_TEST_SRCS "src/TestWidgets/*.cpp")
+file(GLOB BSPLINE_SURF_TEST_SRCS "src/TestBSplineSurface/*.cpp")
 
 # our libs
 add_library(ExpressionParser STATIC ${EXPRESSION_PARSER_SRCS})
@@ -53,14 +57,42 @@ target_include_directories(ExpressionParser
 	PUBLIC
 		${PROJECT_SOURCE_DIR}/include
 )
+
+find_package(Qt5 REQUIRED COMPONENTS Widgets Gui OpenGL Core)
+find_package(OpenGL REQUIRED)
+
+add_subdirectory(${LIBSPLINE_DIR})
+add_library(CustomWidgets STATIC ${WIDGET_SRCS})
+target_include_directories(CustomWidgets
+	PUBLIC
+		${GLM_INCLUDE}
+		${LIBSPLINE_INCLUDE}
+		${Qt5Widgets_INCLUDE_DIRS}
+)
+target_link_libraries (CustomWidgets
+	PRIVATE
+		ExpressionParser
+		libspline
+)
+
 add_library (PhyllotaxisGenerator STATIC ${PHYLLOTAXIS_SRCS})
-target_link_libraries (PhyllotaxisGenerator PRIVATE ExpressionParser)
+target_include_directories (PhyllotaxisGenerator
+	PUBLIC
+		${GLM_INCLUDE}
+)
+target_link_libraries (PhyllotaxisGenerator 
+	PRIVATE
+		ExpressionParser
+		CustomWidgets		
+)
 
 add_library(BSplineSurface STATIC ${BSPLINE_SURFACE_SRCS})
 target_include_directories(BSplineSurface
 	PUBLIC
 		${GLM_INCLUDE}
+		${LIBSPLINE_INCLUDE}
 )
+
 
 # test apps
 add_executable(ExpressionParserTest ${EXPRESSION_TEST_SRCS})
@@ -68,7 +100,19 @@ target_include_directories(ExpressionParserTest
 	PRIVATE
 		${PROJECT_SOURCE_DIR}/include
 )
-target_link_libraries(ExpressionParserTest PRIVATE ExpressionParser)
+target_link_libraries(ExpressionParserTest
+	PRIVATE
+		ExpressionParser
+)
+
+add_executable(WidgetTest ${WIDGET_TEST_SRCS})
+target_link_libraries(WidgetTest
+	PRIVATE
+		CustomWidgets
+		OpenGL::GL
+		Qt5::Widgets Qt5::Gui Qt5::OpenGL Qt5::Core
+)
+
 
 # test BSplineSurface
 # set vars for freeglut
@@ -106,7 +150,6 @@ find_alembic()
 
 build_plugin()
 
-find_package(Qt5 REQUIRED COMPONENTS Widgets Gui OpenGL Core)
 
 # add resource files
 target_sources(${PROJECT_NAME}
@@ -138,5 +181,4 @@ target_link_libraries (${PROJECT_NAME}
 # link qt
 target_link_libraries (${PROJECT_NAME} Qt5::Widgets Qt5::Gui Qt5::OpenGL Qt5::Core)
 # link openGL
-find_package(OpenGL REQUIRED)
 target_link_libraries (${PROJECT_NAME} OpenGL::GL)

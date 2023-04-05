@@ -11,7 +11,7 @@
 #include <maya/MFnTransform.h>
 
 #include <QSpinbox>
-#
+
 #include "ExpressionParser.h"
 
 static MStatus createPhyllotaxisNodeInstance(MObject& phyllotaxisNode, MString const& curveName) {

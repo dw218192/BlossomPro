@@ -51,7 +51,7 @@ Grammar::Turtle& Grammar::Turtle::pitchDown(double angleDegrees) noexcept {
 	return doLocalEulerDegrees(angleDegrees, 0, 0);
 }
 
-Grammar::Turtle& Grammar::Turtle::pushState() {
+Grammar::Turtle& Grammar::Turtle::pushState() noexcept {
 	m_transformStack.push(m_transform);
 	return *this;
 }

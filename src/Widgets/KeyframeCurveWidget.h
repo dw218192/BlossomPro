@@ -3,47 +3,28 @@
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QtGui/QMouseEvent>
-#include <vector>
 #include <glm/glm.hpp>
-
-#include "aaCurve.h"
+#include "spline.h"
 
 class KeyframeCurveWidget : public QOpenGLWidget, protected QOpenGLFunctions {
     Q_OBJECT
-
-private:
-    glm::vec2 m_viewMax;
-    glm::vec2 m_camPos;
-    glm::vec2 m_lastPos;
-
-    glm::vec2 m_camViewScale;
-
-
-
-    int ctrlSelected;
-
-    std::vector<double>* m_framedata;
-    bool m_bIfModify;
-
-    aaAaa::aaSpline* m_spline_data;
-    double m_deltaT;
 public:
     explicit KeyframeCurveWidget(QWidget* parent = 0);
 
-public:
-    void setAE(aaAaa::aaSpline* sdata);
-
-    void setCurrentSelected(int index);
-
 private:
-    void renderText(glm::ivec2 screenPos, QString text);
+    using iv2 = glm::ivec2;
+    using v2 = glm::dvec2;
+    using v3 = glm::dvec3;
+    using v4 = glm::dvec4;
+    using m4 = glm::dmat4;
+
+    m4 getProjection() const;
+    void renderText(QPainter& painter, glm::ivec2 screenPos, QString text);
     void drawGrid();
     void drawSpline();
-
-    glm::vec2 screen2world(glm::ivec2 screenPos);
-    glm::ivec2 world2screen(glm::vec2 world);
-
-    int checkSelected(aaAaa::Vector2 point);
+    v2 screen2world(iv2 screenPos) const;
+    iv2 world2screen(v2 world) const;
+    void editPoint(QMouseEvent* event);
 
 protected:
     void initializeGL() override;
@@ -54,6 +35,18 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent*) override;
 
-signals:
-    void selectValuesChanged(float t, float v);
+// signals: 
+
+private:
+    v2 m_viewMin, m_viewMax;
+    v2 m_lastPos;
+
+    std::vector<double> m_x, m_y;
+    tk::spline m_spline;
+
+    struct PointEditData {
+        size_t index;
+        double xMin, xMax;
+    };
+    std::optional<PointEditData> m_curEdit;
 };

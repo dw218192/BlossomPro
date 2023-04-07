@@ -1,4 +1,4 @@
-﻿cmake_minimum_required (VERSION 3.8)
+﻿cmake_minimum_required (VERSION 3.11)
 
 include($ENV{DEVKIT_LOCATION}/cmake/pluginEntry.cmake)
 
@@ -26,13 +26,11 @@ file(GLOB RESOURCE_FILES "res/*.qrc")
 set(EXT_DIR "ext")
 set(GLUT_DIR ${EXT_DIR}/freeglut-3.2.2)
 set(SRC_ROOT "src")
-set(LIBSPLINE_DIR ${EXT_DIR}/libspline)
 
 # set additional include dir
 set(GLM_INCLUDE "${EXT_DIR}/glm/include")
 set(GLUT_INCLUDE "${GLUT_DIR}/include")
 set(BSPLINE_SURFACE_INCLUDE "src/BSplineSurface/")
-set(LIBSPLINE_INCLUDE "${LIBSPLINE_DIR}")
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -62,18 +60,15 @@ target_include_directories(ExpressionParser
 find_package(Qt5 REQUIRED COMPONENTS Widgets Gui OpenGL Core)
 find_package(OpenGL REQUIRED)
 
-add_subdirectory(${LIBSPLINE_DIR})
 add_library(CustomWidgets STATIC ${WIDGET_SRCS})
 target_include_directories(CustomWidgets
 	PUBLIC
 		${GLM_INCLUDE}
-		${LIBSPLINE_INCLUDE}
 		${Qt5Widgets_INCLUDE_DIRS}
 )
 target_link_libraries (CustomWidgets
 	PRIVATE
 		ExpressionParser
-		libspline
 )
 
 add_library (PhyllotaxisGenerator STATIC ${PHYLLOTAXIS_SRCS})
@@ -91,7 +86,6 @@ add_library(BSplineSurface STATIC ${BSPLINE_SURFACE_SRCS})
 target_include_directories(BSplineSurface
 	PUBLIC
 		${GLM_INCLUDE}
-		${LIBSPLINE_INCLUDE}
 )
 
 

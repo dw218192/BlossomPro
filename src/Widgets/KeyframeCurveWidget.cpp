@@ -24,10 +24,11 @@ kfcw::KeyframeCurveWidget(QWidget* parent, SplineType type)
 	m_lastPos{ 0,0 },
 	m_curEdit{ std::nullopt }
 {
-	m_func.addControlPoint(0, 0);
-	m_func.addControlPoint(1, 1);
 	m_func.setType(SplineType::Linear);
 	m_func.setYScale(m_yScale);
+	m_func.addControlPoint(0, 0.5);
+	m_func.addControlPoint(0.5, 0.5);
+	m_func.addControlPoint(1, 0.5);
 
 	setFocusPolicy(Qt::ClickFocus);
 }
@@ -167,43 +168,49 @@ kfcw::iv2 kfcw::world2screen(v2 world) const {
 	};
 }
 
-bool verifyPos(double x, double y) {
+static bool verifyPos(double x, double y) {
 	return x >= 0 && x <= 1 && y >= 0 && y <= 1;
 }
 
 void kfcw::mousePressEvent(QMouseEvent* event) {
 	v2 pos = screen2world({ event->x(), event->y() });
 
-	if (event->buttons() == Qt::LeftButton || event->button() == Qt::RightButton) {
+	if ((event->buttons() & Qt::LeftButton) || (event->buttons() & Qt::RightButton)) {
 		auto& ctrls = m_func.getControlPoints();
 
 		if (!verifyPos(pos.x, pos.y)) {
 			return;
 		}
-		for (size_t i = 1; i < ctrls.size(); ++i) {
-			auto [x, y] = ctrls[i];
-			auto [px, py] = ctrls[i - 1];
-			if (i < ctrls.size() - 1) {
-				auto [nx, ny] = ctrls[i + 1];
+		for (size_t i = 0; i < ctrls.size(); ++i) {
+			double x, y; 
+			std::tie(x, y) = ctrls[i];
+			double lo_x, hi_x;
+			if (i > 0 && i < ctrls.size() - 1) {
+				lo_x = ctrls[i - 1].first + 0.01;
+				hi_x = ctrls[i + 1].first - 0.01;
+			} else {
+				lo_x = hi_x = x;
+			}
 
-				if (std::abs(x - pos.x) <= k_editTolerance &&
-					std::abs(y - pos.y) <= k_editTolerance) {
-					m_curEdit = PointEditData{
-						ctrls.cbegin() + i,
-						px + 0.01,
-						nx - 0.01
-					};
+			if (std::abs(x - pos.x) <= k_editTolerance &&
+				std::abs(y - pos.y) <= k_editTolerance) {
+				m_curEdit = PointEditData{
+					ctrls.cbegin() + i,
+					lo_x,
+					hi_x
+				};
+				return;
+			}
+
+			if (i > 0) {
+				if (ctrls[i - 1].first < pos.x && x > pos.x) {
+					m_func.insert(ctrls.cbegin() + i, pos.x, pos.y);
+					updateCurve();
 					return;
 				}
 			}
-
-			if(px < pos.x && x > pos.x) {
-				m_func.insert(ctrls.cbegin() + i, pos.x, pos.y);
-				update();
-				return;
-			}
 		}
-	} else if (event->buttons() == Qt::MiddleButton) {
+	} else if (event->buttons() & Qt::MiddleButton) {
 		m_lastPos = pos;
 	}
 }
@@ -218,18 +225,18 @@ void kfcw::editPoint(QMouseEvent* event) {
 			m_curEdit = std::nullopt;
 			return;
 		}
+
 		m_func.setControlPoint(m_curEdit->it, pos.x, pos.y);
 		update();
 	}
 }
 
 void kfcw::mouseReleaseEvent(QMouseEvent* event) {
-	if (event->buttons() == Qt::LeftButton || event->button() == Qt::RightButton) {
+	if ((event->button() == Qt::LeftButton) || (event->button() == Qt::RightButton)) {
 		if (m_curEdit) {
 			m_curEdit = std::nullopt;
+			updateCurve();
 		}
-
-		emit curveChanged();
 	}
 }
 
@@ -247,7 +254,7 @@ void kfcw::mouseMoveEvent(QMouseEvent* event) {
 		m_viewMax = glm::clamp(m_viewMax, viewSize, {1, 1});
 
 		update();
-	} else if (event->buttons() == Qt::LeftButton || event->button() == Qt::RightButton) {
+	} else if ((event->buttons() & Qt::LeftButton) || (event->buttons() & Qt::RightButton)) {
 		editPoint(event);
 	}
 	m_lastPos = pos;
@@ -260,5 +267,11 @@ void kfcw::wheelEvent(QWheelEvent* e)
 	// make sure it's not too crazy
 	m_viewMax = glm::clamp(m_viewMax, { 0.3, 0.3 }, { 1.0, 1.0 });
 
+	update();
+}
+
+void KeyframeCurveWidget::updateCurve()
+{
+	emit curveChanged();
 	update();
 }

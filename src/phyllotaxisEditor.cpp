@@ -67,6 +67,8 @@ MStatus PhyllotaxisEditor::updatePhyllotaxisNode() {
 
         std::string const str = m_func->serialize();
         if (test != str) {
+            MGlobal::displayInfo("updated curve");
+
             status = plug.setString(str.c_str());
             CHECK(status, status);
         }
@@ -119,7 +121,6 @@ PhyllotaxisEditor::~PhyllotaxisEditor() { }
 void PhyllotaxisEditor::updateDensityFunc() {
     switch (m_densityFuncEditType) {
     case KEYFRAME:
-        MGlobal::displayInfo("curved applied");
         m_func = m_ui.keyframeCurveEditor->getFunction();
         break;
     case EXPRESSION:

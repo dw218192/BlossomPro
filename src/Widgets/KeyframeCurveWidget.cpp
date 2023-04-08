@@ -1,14 +1,12 @@
 #include "KeyframeCurveWidget.h"
-#include <QPainter>
 #include <QtWidgets>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
-#include <iostream>
 
 // convention
 
 // view volume size is an orthographic volume defined by [view_min, view_max]
-// wrold grid size = [0-1, 0-1]
+// world grid size = [0-1, 0-1]
 // zoom in/out is implemented by view volume size change
 
 static constexpr double k_zoomFactor = 0.9;
@@ -18,18 +16,32 @@ static constexpr double k_evalStep = 0.01;
 
 using kfcw = KeyframeCurveWidget;
 
-
-kfcw::KeyframeCurveWidget(QWidget* parent /* = 0 */)
+kfcw::KeyframeCurveWidget(QWidget* parent, SplineType type)
 	: QOpenGLWidget(parent),
+	m_yScale(1.0),
 	m_viewMin{ 0,0 },
 	m_viewMax{ 1,1 },
 	m_lastPos{ 0,0 },
 	m_curEdit{ std::nullopt }
 {
-	m_x.push_back(0); m_y.push_back(0);
-	m_x.push_back(1); m_y.push_back(1);
+	m_func.addControlPoint(0, 0);
+	m_func.addControlPoint(1, 1);
+	m_func.setType(SplineType::Linear);
+	m_func.setYScale(m_yScale);
 
 	setFocusPolicy(Qt::ClickFocus);
+}
+
+void kfcw::setYScale(double scale) {
+	m_yScale = glm::clamp(scale, 1.0, 1000.0);
+	m_func.setYScale(m_yScale);
+
+	update();
+}
+
+void kfcw::setSplineType(SplineType type) {
+	m_func.setType(type);
+	update();
 }
 
 void kfcw::renderText(QPainter& painter, glm::ivec2 screenPos, QString text)
@@ -71,10 +83,12 @@ void kfcw::drawGrid() {
 	// Draw labels, which are view dependent
 	for (double y = 0; y <= maxPoint.y + k_gridSpacing; y += k_gridSpacing) {
 		iv2 pos = world2screen({ 0, y });
-		renderText(painter, pos, QString::number(y, 'f', 1));
+		pos.x = 0;
+		renderText(painter, pos, QString::number(y * m_yScale, 'f', 1));
 	}
 	for (double x = 0; x <= maxPoint.x + k_gridSpacing; x += k_gridSpacing) {
 		iv2 pos = world2screen({ x, 0 });
+		pos.y = height();
 		renderText(painter, pos, QString::number(x, 'f', 1));
 	}
 	painter.end();
@@ -82,11 +96,13 @@ void kfcw::drawGrid() {
 
 
 void kfcw::drawSpline() {
-	if (m_x.size() >= 3) {
+	auto& ctrls = m_func.getControlPoints();
+	if (ctrls.size() >= 3) {
 		glBegin(GL_LINE_STRIP);
 		glColor3d(0.0, 0.0, 0.0);
 		for (double x = 0; x <= 1; x += k_evalStep) {
-			double y = m_spline(x);
+			//operator() of m_func takes the scale into account, but we don't want scaled y values here
+			double y = m_func(x) / m_yScale;
 			glVertex3d(x, y, 0);
 		}
 		glEnd();
@@ -98,8 +114,8 @@ void kfcw::drawSpline() {
 	glPointSize(5.0f);
 	glBegin(GL_POINTS);
 	glColor3d(1.0, 0.0, 0.0);
-	for (size_t i = 0; i < m_x.size(); ++i) {
-		glVertex3d(m_x[i], m_y[i], 0);
+	for (auto [x, y] : ctrls) {
+		glVertex3d(x, y, 0);
 	}
 	glEnd();
 }
@@ -157,29 +173,32 @@ bool verifyPos(double x, double y) {
 
 void kfcw::mousePressEvent(QMouseEvent* event) {
 	v2 pos = screen2world({ event->x(), event->y() });
+
 	if (event->buttons() == Qt::LeftButton || event->button() == Qt::RightButton) {
+		auto& ctrls = m_func.getControlPoints();
+
 		if (!verifyPos(pos.x, pos.y)) {
 			return;
 		}
+		for (size_t i = 1; i < ctrls.size(); ++i) {
+			auto [x, y] = ctrls[i];
+			auto [px, py] = ctrls[i - 1];
+			if (i < ctrls.size() - 1) {
+				auto [nx, ny] = ctrls[i + 1];
 
-		for (size_t i = 1; i < m_x.size(); ++i) {
-			if (i < m_x.size() - 1) {
-				if (std::abs(m_x[i] - pos.x) <= k_editTolerance &&
-					std::abs(m_y[i] - pos.y) <= k_editTolerance) {
+				if (std::abs(x - pos.x) <= k_editTolerance &&
+					std::abs(y - pos.y) <= k_editTolerance) {
 					m_curEdit = PointEditData{
-						i,
-						m_x[i - 1] + k_editTolerance,
-						m_x[i + 1] - k_editTolerance
+						ctrls.cbegin() + i,
+						px + 0.01,
+						nx - 0.01
 					};
 					return;
 				}
 			}
 
-			if(m_x[i-1] < pos.x && m_x[i] > pos.x)
-			{
-				m_x.insert(m_x.begin() + i, pos.x);
-				m_y.insert(m_y.begin() + i, pos.y);
-				m_spline.set_points(m_x, m_y);
+			if(px < pos.x && x > pos.x) {
+				m_func.insert(ctrls.cbegin() + i, pos.x, pos.y);
 				update();
 				return;
 			}
@@ -199,11 +218,7 @@ void kfcw::editPoint(QMouseEvent* event) {
 			m_curEdit = std::nullopt;
 			return;
 		}
-
-		m_x[m_curEdit->index] = pos.x;
-		m_y[m_curEdit->index] = pos.y;
-		m_spline.set_points(m_x, m_y);
-
+		m_func.setControlPoint(m_curEdit->it, pos.x, pos.y);
 		update();
 	}
 }
@@ -213,6 +228,8 @@ void kfcw::mouseReleaseEvent(QMouseEvent* event) {
 		if (m_curEdit) {
 			m_curEdit = std::nullopt;
 		}
+
+		emit curveChanged();
 	}
 }
 

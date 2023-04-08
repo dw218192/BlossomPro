@@ -18,6 +18,8 @@ struct UserCurveLenFunction
 	UserCurveLenFunction() = default;
 	UserCurveLenFunction(UserCurveLenFunction&) = delete;
 	UserCurveLenFunction(UserCurveLenFunction&&) = delete;
+	virtual ~UserCurveLenFunction() = default;
+
 	/**
 	 * \brief evaluates the user-defined function
 	 * \param s curve length

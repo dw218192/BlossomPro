@@ -109,22 +109,30 @@ PhyllotaxisEditor::PhyllotaxisEditor(QWidget* parent) :
 
     m_densityFuncExpr = m_ui.expressionPlainTextEdit->toPlainText().toStdString();
 	m_densityFuncMirror = m_ui.mirrorCheckBox->isChecked();
+    m_densityFuncEditType = static_cast<DensityFuncEditType>(m_ui.tabWidget->currentIndex());
+
     updateDensityFunc();
 }
 
 PhyllotaxisEditor::~PhyllotaxisEditor() { }
 
 void PhyllotaxisEditor::updateDensityFunc() {
-    m_func = std::make_shared<ExpressionCurveLenFunction>(m_densityFuncExpr, m_densityFuncMirror);
-    if (!m_func->valid()) {
-        MGlobal::displayInfo(ExpressionParser::getLastError().c_str());
-        m_ui.curveWidget->setCurve(m_func);
-    } else {
-        m_ui.curveWidget->setCurve(m_func);
-
-        if (!m_phyllotaxisNodeInstance.isNull()) {
-            CHECK(updatePhyllotaxisNode(), (void)0);
+    switch (m_densityFuncEditType) {
+    case KEYFRAME:
+        MGlobal::displayInfo("curved applied");
+        m_func = m_ui.keyframeCurveEditor->getFunction();
+        break;
+    case EXPRESSION:
+        m_func = std::make_shared<ExpressionCurveLenFunction>(m_densityFuncExpr, m_densityFuncMirror);
+        if (!m_func->valid()) {
+            MGlobal::displayInfo(ExpressionParser::getLastError().c_str());
+            m_ui.curveWidget->setCurve(m_func);
         }
+        break;
+    }
+
+    if (!m_phyllotaxisNodeInstance.isNull()) {
+        CHECK(updatePhyllotaxisNode(), (void)0);
     }
 }
 
@@ -148,6 +156,14 @@ void PhyllotaxisEditor::on_integStepDoubleBox_valueChanged(double value) {
     if (!m_phyllotaxisNodeInstance.isNull()) {
         CHECK(updatePhyllotaxisNode(), (void)0);
     }
+}
+
+void PhyllotaxisEditor::on_tabWidget_currentChanged(int index) {
+    m_densityFuncEditType = static_cast<DensityFuncEditType>(index);
+}
+
+void PhyllotaxisEditor::on_keyframeCurveEditor_curveChanged() {
+    updateDensityFunc();
 }
 
 void PhyllotaxisEditor::on_curveWidget_curveUpdated() {

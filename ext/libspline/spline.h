@@ -41,9 +41,14 @@
 // (we get them because we have implementations in the header file,
 // and this is because we want to be able to quickly separate them
 // into a cpp file if necessary)
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4505)
+#else
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
-
+#endif
 // unnamed namespace only because the implementation is in this
 // header file and we don't want to export symbols to the obj files
 
@@ -946,6 +951,10 @@ std::vector<double> solve_cubic(double a, double b, double c, double d,
 
 } // namespace
 
+#ifdef _MSC_VER
+#pragma warning(pop)
+#else
 #pragma GCC diagnostic pop
+#endif
 
 #endif /* TK_SPLINE_H */

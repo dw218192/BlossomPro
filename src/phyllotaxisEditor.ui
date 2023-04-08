@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>719</width>
+    <width>510</width>
     <height>444</height>
    </rect>
   </property>
@@ -109,18 +109,18 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="tab2">
     <attribute name="title">
      <string>keyframe editor</string>
     </attribute>
-    <widget class="KeyframeCurveWidget" name="keyframeCurveWidget">
+    <widget class="KeyframeCurveEditor" name="keyframeCurveEditor">
      <property name="geometry">
       <rect>
        <x>10</x>
        <y>10</y>
-       <width>341</width>
+       <width>331</width>
        <height>241</height>
       </rect>
      </property>
@@ -322,9 +322,9 @@
    <header>Widgets/CurveWidget.h</header>
   </customwidget>
   <customwidget>
-   <class>KeyframeCurveWidget</class>
+   <class>KeyframeCurveEditor</class>
    <extends>QOpenGLWidget</extends>
-   <header>Widgets/Keyframecurvewidget.h</header>
+   <header>Widgets/KeyframeCurveEditor.h</header>
   </customwidget>
  </customwidgets>
  <resources>

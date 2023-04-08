@@ -4,12 +4,11 @@
 #include <QOpenGLFunctions>
 #include <QtGui/QMouseEvent>
 #include <glm/glm.hpp>
-#include "spline.h"
+
+#include "../Phyllotaxis/KeyframeCurveLenFunction.h"
 
 class KeyframeCurveWidget : public QOpenGLWidget, protected QOpenGLFunctions {
     Q_OBJECT
-public:
-    explicit KeyframeCurveWidget(QWidget* parent = 0);
 
 private:
     using iv2 = glm::ivec2;
@@ -18,6 +17,20 @@ private:
     using v4 = glm::dvec4;
     using m4 = glm::dmat4;
 
+public:
+    using SplineType = KeyframeCurveLenFunction::SplineType;
+
+	explicit KeyframeCurveWidget(QWidget* parent = nullptr, SplineType type = SplineType::Linear);
+    void setYScale(double scale);
+    void setSplineType(SplineType type);
+    std::shared_ptr<UserCurveLenFunction> getFunction() const {
+        return std::make_shared<KeyframeCurveLenFunction>(m_func.getControlPoints(), m_func.getType());
+    }
+
+signals:
+    void curveChanged();
+
+private:
     m4 getProjection() const;
     void renderText(QPainter& painter, glm::ivec2 screenPos, QString text);
     void drawGrid();
@@ -35,17 +48,13 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent*) override;
 
-// signals: 
-
 private:
+    double m_yScale;
     v2 m_viewMin, m_viewMax;
     v2 m_lastPos;
-
-    std::vector<double> m_x, m_y;
-    tk::spline m_spline;
-
+    KeyframeCurveLenFunction m_func;
     struct PointEditData {
-        size_t index;
+        ControlPointArray::ConstIterator it;
         double xMin, xMax;
     };
     std::optional<PointEditData> m_curEdit;

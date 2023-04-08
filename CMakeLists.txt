@@ -23,8 +23,14 @@ file(GLOB BSPLINE_SURFACE_SRCS "src/BSplineSurface/*.cpp" "src/BSplineSurface/*.
 file(GLOB RESOURCE_FILES "res/*.qrc")
 
 # external sources
-set(EXT_DIR "ext")
+set(EXT_DIR ${PROJECT_SOURCE_DIR}/ext)
 set(GLUT_DIR ${EXT_DIR}/freeglut-3.2.2)
+set(LIBSPLINE_DIR ${EXT_DIR}/libspline)
+
+add_library(libspline INTERFACE)
+target_include_directories(libspline INTERFACE ${LIBSPLINE_DIR})
+target_sources(libspline INTERFACE ${LIBSPLINE_DIR}/spline.h)
+
 set(SRC_ROOT "src")
 
 # set additional include dir
@@ -69,6 +75,7 @@ target_include_directories(CustomWidgets
 target_link_libraries (CustomWidgets
 	PRIVATE
 		ExpressionParser
+		libspline
 )
 
 add_library (PhyllotaxisGenerator STATIC ${PHYLLOTAXIS_SRCS})
@@ -79,7 +86,8 @@ target_include_directories (PhyllotaxisGenerator
 target_link_libraries (PhyllotaxisGenerator 
 	PRIVATE
 		ExpressionParser
-		CustomWidgets		
+		CustomWidgets
+		libspline
 )
 
 add_library(BSplineSurface STATIC ${BSPLINE_SURFACE_SRCS})
@@ -105,7 +113,9 @@ target_link_libraries(WidgetTest
 	PRIVATE
 		CustomWidgets
 		OpenGL::GL
+		PhyllotaxisGenerator
 		Qt5::Widgets Qt5::Gui Qt5::OpenGL Qt5::Core
+		libspline
 )
 
 
@@ -172,6 +182,7 @@ endif ()
 # link our libs
 target_link_libraries (${PROJECT_NAME} 
 	PhyllotaxisGenerator
+	libspline
 	BSplineSurface
 )
 

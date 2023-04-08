@@ -1,5 +1,6 @@
 #include "UserCurveLenFunction.h"
 #include "ExpressionCurveLenFunction.h"
+#include "KeyframeCurveLenFunction.h"
 
 #include "../Utils.h"
 #include <sstream>
@@ -14,6 +15,10 @@ std::shared_ptr<UserCurveLenFunction> UserCurveLenFunction::deserialize(char con
 
 	if(typeStr == STR(ExpressionCurveLenFunction)) {
 		auto ret = std::make_shared<ExpressionCurveLenFunction>("");
+		ret->deserialize(ss);
+		return ret;
+	} else if(typeStr == STR(KeyframeCurveLenFunction)) {
+		auto ret = std::make_shared<KeyframeCurveLenFunction>(ControlPointArray{}, KeyframeCurveLenFunction::SplineType::Linear);
 		ret->deserialize(ss);
 		return ret;
 	} else {

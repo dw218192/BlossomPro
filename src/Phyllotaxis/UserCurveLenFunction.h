@@ -30,6 +30,6 @@ struct UserCurveLenFunction
 
 	virtual bool valid() const = 0;
 	virtual std::string serialize() const = 0;
-private:
+
 	virtual void deserialize(std::istringstream&) = 0;
 };

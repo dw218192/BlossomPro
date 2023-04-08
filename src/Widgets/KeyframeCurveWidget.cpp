@@ -22,9 +22,9 @@ kfcw::KeyframeCurveWidget(QWidget* parent, SplineType type)
 	m_viewMin{ 0,0 },
 	m_viewMax{ 1,1 },
 	m_lastPos{ 0,0 },
-	m_curEdit{ std::nullopt }
+	m_curEdit{ std::nullopt },
+	m_func{ {}, SplineType::Linear }
 {
-	m_func.setType(SplineType::Linear);
 	m_func.setYScale(m_yScale);
 	m_func.addControlPoint(0, 0.5);
 	m_func.addControlPoint(0.5, 0.5);
@@ -37,7 +37,7 @@ void kfcw::setYScale(double scale) {
 	m_yScale = glm::clamp(scale, 1.0, 1000.0);
 	m_func.setYScale(m_yScale);
 
-	update();
+	updateCurve();
 }
 
 void kfcw::setSplineType(SplineType type) {

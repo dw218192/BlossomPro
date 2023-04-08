@@ -67,8 +67,6 @@ MStatus PhyllotaxisEditor::updatePhyllotaxisNode() {
 
         std::string const str = m_func->serialize();
         if (test != str) {
-            MGlobal::displayInfo("updated curve");
-
             status = plug.setString(str.c_str());
             CHECK(status, status);
         }

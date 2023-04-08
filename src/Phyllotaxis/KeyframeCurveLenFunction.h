@@ -12,7 +12,6 @@ struct KeyframeCurveLenFunction : public UserCurveLenFunction {
         C2 = 2,
     };
 
-    KeyframeCurveLenFunction() = default;
     KeyframeCurveLenFunction(ControlPointArray controlPoints, SplineType type);
 	double operator()(double s) const override;
 	bool operator==(UserCurveLenFunction const&) const override;
@@ -33,9 +32,9 @@ struct KeyframeCurveLenFunction : public UserCurveLenFunction {
     ControlPointArray const& getControlPoints() const {
         return m_controlPoints;
     }
-private:
-	void deserialize(std::istringstream&) override;
+    void deserialize(std::istringstream&) override;
 
+private:
 // serialized
     ControlPointArray m_controlPoints;
     tk::spline::spline_type m_splineType;

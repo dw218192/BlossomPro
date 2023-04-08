@@ -101,7 +101,7 @@ MStatus PhyllotaxisNode::compute(const MPlug& plug, MDataBlock& data) {
 	CHECK(status, status);
 
 	if(!m_curveFunc || m_curveFunc->serialize() != serializedCurve) {
-		m_curveFunc = UserCurveLenFunction::deserialize(serializedCurve.asChar());
+		HANDLE_EXCEPTION(m_curveFunc = UserCurveLenFunction::deserialize(serializedCurve.asChar()));
 	}
 
 	if(!m_curveFunc || !m_curveFunc->valid()) {
@@ -115,7 +115,9 @@ MStatus PhyllotaxisNode::compute(const MPlug& plug, MDataBlock& data) {
 	CHECK(status, status);
 
 	m_grammar = std::make_unique<PhyllotaxisGrammar>(std::move(curveInfo), m_curveFunc, step);
-	m_grammar->process(numIter);
+	HANDLE_EXCEPTION(m_grammar->process(numIter));
+
+	MGlobal::displayInfo("here");
 
 	MFnArrayAttrsData arrayAttrsData;
 

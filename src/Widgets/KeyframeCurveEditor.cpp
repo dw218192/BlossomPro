@@ -33,6 +33,7 @@ kfce::KeyframeCurveEditor(QWidget* parent)
     auto const slider = new QSlider{ Qt::Vertical, this };
     slider->setRange(1, 1000);
     slider->setSingleStep(1);
+    m_curveWidget->setYScale(1);
 
     auto const combo = new QComboBox{ this };
 
@@ -40,6 +41,7 @@ kfce::KeyframeCurveEditor(QWidget* parent)
     combo->addItem("Linear", static_cast<int>(stype::Linear));
     combo->addItem("Cubic C1", static_cast<int>(stype::C1));
     combo->addItem("Cubic C2", static_cast<int>(stype::C2));
+    m_curveWidget->setSplineType(stype::Linear);
 
     auto const sliderAndCurve = new QHBoxLayout{};
     sliderAndCurve->addWidget(m_curveWidget);

@@ -29,8 +29,8 @@ static kfclf::SplineType trans(tk::spline::spline_type type) {
 	}
 }
 
-kfclf::KeyframeCurveLenFunction(ControlPointArray controlPoints, SplineType type)
-	: m_controlPoints{std::move(controlPoints)}, m_splineType{trans(type)}, m_yScale(1.0) { }
+kfclf::KeyframeCurveLenFunction(ControlPointArray controlPoints, SplineType type, double scale)
+	: m_controlPoints{std::move(controlPoints)}, m_splineType{trans(type)}, m_yScale(scale) { }
 
 double kfclf::operator()(double s) const {
 	return m_yScale * std::max(0.0, m_spline(s));

@@ -25,7 +25,7 @@ public:
     void setSplineType(SplineType type);
     void updateCurve();
     std::shared_ptr<UserCurveLenFunction> getFunction() const {
-        return std::make_shared<KeyframeCurveLenFunction>(m_func.getControlPoints(), m_func.getType());
+        return std::make_shared<KeyframeCurveLenFunction>(m_func.getControlPoints(), m_func.getType(), m_func.getScale());
     }
 
 signals:

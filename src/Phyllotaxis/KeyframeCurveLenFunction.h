@@ -12,7 +12,7 @@ struct KeyframeCurveLenFunction : public UserCurveLenFunction {
         C2 = 2,
     };
 
-    KeyframeCurveLenFunction(ControlPointArray controlPoints, SplineType type);
+    KeyframeCurveLenFunction(ControlPointArray controlPoints, SplineType type, double scale);
 	double operator()(double s) const override;
 	bool operator==(UserCurveLenFunction const&) const override;
 	bool operator==(KeyframeCurveLenFunction const&) const;

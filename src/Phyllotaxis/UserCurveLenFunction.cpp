@@ -18,7 +18,7 @@ std::shared_ptr<UserCurveLenFunction> UserCurveLenFunction::deserialize(char con
 		ret->deserialize(ss);
 		return ret;
 	} else if(typeStr == STR(KeyframeCurveLenFunction)) {
-		auto ret = std::make_shared<KeyframeCurveLenFunction>(ControlPointArray{}, KeyframeCurveLenFunction::SplineType::Linear);
+		auto ret = std::make_shared<KeyframeCurveLenFunction>(ControlPointArray{}, KeyframeCurveLenFunction::SplineType::Linear, 1.0);
 		ret->deserialize(ss);
 		return ret;
 	} else {

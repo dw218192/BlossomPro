@@ -22,7 +22,7 @@ kfcw::KeyframeCurveWidget(QWidget* parent, SplineType type)
 	  m_viewMin{0, 0},
 	  m_viewMax{1, 1},
 	  m_lastPos{0, 0},
-	  m_func{{}, SplineType::Linear},
+	  m_func{{}, SplineType::Linear, 1.0},
 	  m_curEdit{std::nullopt} {
 	m_func.setYScale(m_yScale);
 	m_func.addControlPoint(0, 0.5);
@@ -41,7 +41,7 @@ void kfcw::setYScale(double scale) {
 
 void kfcw::setSplineType(SplineType type) {
 	m_func.setType(type);
-	update();
+	updateCurve();
 }
 
 void kfcw::renderText(QPainter& painter, glm::ivec2 screenPos, QString text) {

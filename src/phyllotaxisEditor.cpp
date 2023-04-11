@@ -125,8 +125,9 @@ void PhyllotaxisEditor::updateDensityFunc() {
         m_func = std::make_shared<ExpressionCurveLenFunction>(m_densityFuncExpr, m_densityFuncMirror);
         if (!m_func->valid()) {
             MGlobal::displayInfo(ExpressionParser::getLastError().c_str());
-            m_ui.curveWidget->setCurve(m_func);
         }
+        m_ui.curveWidget->setCurve(m_func);
+
         break;
     }
 
@@ -159,6 +160,7 @@ void PhyllotaxisEditor::on_integStepDoubleBox_valueChanged(double value) {
 
 void PhyllotaxisEditor::on_tabWidget_currentChanged(int index) {
     m_densityFuncEditType = static_cast<DensityFuncEditType>(index);
+    updateDensityFunc();
 }
 
 void PhyllotaxisEditor::on_keyframeCurveEditor_curveChanged() {

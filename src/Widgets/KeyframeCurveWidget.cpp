@@ -18,13 +18,12 @@ using kfcw = KeyframeCurveWidget;
 
 kfcw::KeyframeCurveWidget(QWidget* parent, SplineType type)
 	: QOpenGLWidget(parent),
-	m_yScale(1.0),
-	m_viewMin{ 0,0 },
-	m_viewMax{ 1,1 },
-	m_lastPos{ 0,0 },
-	m_curEdit{ std::nullopt },
-	m_func{ {}, SplineType::Linear }
-{
+	  m_yScale(1.0),
+	  m_viewMin{0, 0},
+	  m_viewMax{1, 1},
+	  m_lastPos{0, 0},
+	  m_func{{}, SplineType::Linear},
+	  m_curEdit{std::nullopt} {
 	m_func.setYScale(m_yScale);
 	m_func.addControlPoint(0, 0.5);
 	m_func.addControlPoint(0.5, 0.5);
@@ -45,8 +44,7 @@ void kfcw::setSplineType(SplineType type) {
 	update();
 }
 
-void kfcw::renderText(QPainter& painter, glm::ivec2 screenPos, QString text)
-{
+void kfcw::renderText(QPainter& painter, glm::ivec2 screenPos, QString text) {
 	painter.setPen(Qt::yellow);
 	painter.setFont(QFont("Helvetica", 8));
 	painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
@@ -54,8 +52,8 @@ void kfcw::renderText(QPainter& painter, glm::ivec2 screenPos, QString text)
 }
 
 void kfcw::drawGrid() {
-	static constexpr v2 maxPoint{ 1, 1 };
-	static constexpr v2 minPoint{ 0, 0 };
+	static constexpr v2 maxPoint{1, 1};
+	static constexpr v2 minPoint{0, 0};
 
 	glBegin(GL_LINES);
 	// X
@@ -80,15 +78,15 @@ void kfcw::drawGrid() {
 	}
 	glEnd();
 
-	QPainter painter{ this };
+	QPainter painter{this};
 	// Draw labels, which are view dependent
 	for (double y = 0; y <= maxPoint.y + k_gridSpacing; y += k_gridSpacing) {
-		iv2 pos = world2screen({ 0, y });
+		iv2 pos = world2screen({0, y});
 		pos.x = 0;
 		renderText(painter, pos, QString::number(y * m_yScale, 'f', 1));
 	}
 	for (double x = 0; x <= maxPoint.x + k_gridSpacing; x += k_gridSpacing) {
-		iv2 pos = world2screen({ x, 0 });
+		iv2 pos = world2screen({x, 0});
 		pos.y = height();
 		renderText(painter, pos, QString::number(x, 'f', 1));
 	}
@@ -108,10 +106,10 @@ void kfcw::drawSpline() {
 		}
 		glEnd();
 	}
-	
+
 	// highlight the control points
 	// using m_x and m_y
-	
+
 	glPointSize(5.0f);
 	glBegin(GL_POINTS);
 	glColor3d(1.0, 0.0, 0.0);
@@ -121,8 +119,7 @@ void kfcw::drawSpline() {
 	glEnd();
 }
 
-void kfcw::initializeGL()
-{
+void kfcw::initializeGL() {
 	initializeOpenGLFunctions();
 	glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
 	glShadeModel(GL_FLAT);
@@ -131,8 +128,7 @@ void kfcw::initializeGL()
 	glPointSize(7.0f);
 }
 
-void kfcw::paintGL()
-{
+void kfcw::paintGL() {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glLoadMatrixd(glm::value_ptr(getProjection()));
 	drawGrid();
@@ -151,18 +147,18 @@ void kfcw::resizeGL(int width, int height) {
 
 kfcw::v2 kfcw::screen2world(iv2 screenPos) const {
 	double w = this->width(), h = this->height();
-	v2 ndcCoords { 2 * screenPos.x / w - 1, 1 - 2 * screenPos.y / h };
-	v4 world = glm::inverse(getProjection()) * v4 { ndcCoords, 0, 1 };
+	v2 ndcCoords{2 * screenPos.x / w - 1, 1 - 2 * screenPos.y / h};
+	v4 world = glm::inverse(getProjection()) * v4{ndcCoords, 0, 1};
 	world /= world.w;
 
-	return v2 { world.x, world.y };
+	return v2{world.x, world.y};
 }
 
 kfcw::iv2 kfcw::world2screen(v2 world) const {
-	v4 clipCoords = getProjection() * v4 { world, 0.0, 1.0 };
-	v3 ndcCoords = v3 { clipCoords } / clipCoords.w;
-	
-	return iv2 {
+	v4 clipCoords = getProjection() * v4{world, 0.0, 1.0};
+	v3 ndcCoords = v3{clipCoords} / clipCoords.w;
+
+	return iv2{
 		(ndcCoords.x + 1.0) * 0.5 * this->width(),
 		(1.0 - ndcCoords.y) * 0.5 * this->height()
 	};
@@ -173,7 +169,7 @@ static bool verifyPos(double x, double y) {
 }
 
 void kfcw::mousePressEvent(QMouseEvent* event) {
-	v2 pos = screen2world({ event->x(), event->y() });
+	v2 pos = screen2world({event->x(), event->y()});
 
 	if ((event->buttons() & Qt::LeftButton) || (event->buttons() & Qt::RightButton)) {
 		auto& ctrls = m_func.getControlPoints();
@@ -182,7 +178,7 @@ void kfcw::mousePressEvent(QMouseEvent* event) {
 			return;
 		}
 		for (size_t i = 0; i < ctrls.size(); ++i) {
-			double x, y; 
+			double x, y;
 			std::tie(x, y) = ctrls[i];
 			double lo_x, hi_x;
 			if (i > 0 && i < ctrls.size() - 1) {
@@ -217,7 +213,7 @@ void kfcw::mousePressEvent(QMouseEvent* event) {
 
 void kfcw::editPoint(QMouseEvent* event) {
 	if (m_curEdit) {
-		v2 pos = screen2world({ event->x(), event->y() });
+		v2 pos = screen2world({event->x(), event->y()});
 		pos.x = glm::clamp(pos.x, m_curEdit->xMin, m_curEdit->xMax);
 		pos.y = glm::clamp(pos.y, 0.0, 1.0);
 
@@ -241,7 +237,7 @@ void kfcw::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void kfcw::mouseMoveEvent(QMouseEvent* event) {
-	v2 pos = screen2world({ event->x(), event->y() });
+	v2 pos = screen2world({event->x(), event->y()});
 	v2 delta = m_lastPos - pos;
 
 	if (event->buttons() & Qt::MiddleButton) {
@@ -260,18 +256,16 @@ void kfcw::mouseMoveEvent(QMouseEvent* event) {
 	m_lastPos = pos;
 }
 
-void kfcw::wheelEvent(QWheelEvent* e)
-{
+void kfcw::wheelEvent(QWheelEvent* e) {
 	double factor = e->angleDelta().y() > 0 ? 1 / k_zoomFactor : k_zoomFactor;
 	m_viewMax *= factor;
 	// make sure it's not too crazy
-	m_viewMax = glm::clamp(m_viewMax, { 0.3, 0.3 }, { 1.0, 1.0 });
+	m_viewMax = glm::clamp(m_viewMax, {0.3, 0.3}, {1.0, 1.0});
 
 	update();
 }
 
-void KeyframeCurveWidget::updateCurve()
-{
+void KeyframeCurveWidget::updateCurve() {
 	emit curveChanged();
 	update();
 }

@@ -1,0 +1,6 @@
+connectAttr {}.worldSpace {}.{};
+$ins = `createNode instancer`;
+$sphere = `polySphere`;
+setAttr ($sphere[0] + ".visibility") 0;
+connectAttr ($sphere[0] + ".matrix") ($ins + ".inputHierarchy[0]");
+connectAttr {}.{} ($ins + ".inputPoints");

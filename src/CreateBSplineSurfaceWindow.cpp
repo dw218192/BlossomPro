@@ -7,6 +7,8 @@
 #include <QFile>
 #include <QTextStream>
 
+#include "Utils.h"
+
 CreateBSplineSurfaceWindow::CreateBSplineSurfaceWindow(QWidget* parent)
 	: QDialog(parent)
 {
@@ -20,18 +22,7 @@ CreateBSplineSurfaceWindow::~CreateBSplineSurfaceWindow()
 
 void CreateBSplineSurfaceWindow::on_CreateBN_clicked()
 {
-	QString const filePath = QString{ ":/" } + "MEL/createBSplineSurface.mel";
-
-	QFile file{ filePath };
-	if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-		MString error;
-		error += "Fail to Load: ";
-		error += filePath.toStdString().c_str();
-		MGlobal::displayError(error);
-		return;
-	}
-	std::string mel_template = QTextStream{ &file }.readAll().toStdString();
-
+	std::string mel_template = loadResource("MEL/createBSplineSurface.mel");
 	std::string cmds = std::vformat(mel_template, std::make_format_args(
 								          ui.CPXSpinBox->value(),
 								          ui.CPYSpinBox->value(),

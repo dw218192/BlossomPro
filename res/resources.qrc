@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="MEL">
+    <file>createPhyllotaxis.mel</file>
     <file>cleanup.mel</file>
     <file>startup.mel</file>
     <file>createBSplineSurface.mel</file>

@@ -131,14 +131,23 @@ MStatus PhyllotaxisNode::compute(const MPlug& plug, MDataBlock& data) {
 	CHECK(status, status);
 
 	for (auto [pos, scale] : m_grammar->result()) {
-		positions.append(pos);
-		scales.append(scale);
+		status = positions.append(pos);
+		CHECK(status, status);
+
+		status = scales.append(scale);
+		CHECK(status, status);
 	}
 
 	MGlobal::displayInfo(MString{ "num of instances = " } + positions.length());
 
-	data.outputValue(s_output).setMObject(aadObj);
-	data.setClean(plug);
+	MDataHandle handle = data.outputValue(s_output, &status);
+	CHECK(status, status);
+
+	status = handle.setMObject(aadObj);
+	CHECK(status, status);
+
+	status = data.setClean(plug);
+	CHECK(status, status);
 
 	return MStatus::kSuccess;
 }

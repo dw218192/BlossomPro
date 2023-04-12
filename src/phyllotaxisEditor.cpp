@@ -12,6 +12,8 @@
 
 #include <QSpinbox>
 
+#include <format>
+
 #include "ExpressionParser.h"
 
 static MStatus createPhyllotaxisNodeInstance(MObject& phyllotaxisNode, MString const& curveName) {
@@ -25,25 +27,17 @@ static MStatus createPhyllotaxisNodeInstance(MObject& phyllotaxisNode, MString c
     CHECK(status, status);
 
     // connect instancer
-    static char const* const melCmdFmt =
-        "connectAttr %s.worldSpace %s.%s; \n"
-        "$ins = `createNode instancer`; \n"
-        "$sphere = `polySphere`;\n"
-		"setAttr ($sphere[0] + \".visibility\") 0;\n" // hide the sphere
-        "connectAttr ($sphere[0] + \".matrix\") ($ins + \".inputHierarchy[0]\"); \n"
-        "connectAttr %s.%s ($ins + \".inputPoints\"); \n"; // connect output
-    static char buf[512];
-    int const check = std::snprintf(buf, sizeof(buf), melCmdFmt,
-        curveName.asChar(), fnPhyllotaxisNode.name().asChar(), pn::longName(pn::s_curve),
-        fnPhyllotaxisNode.name().asChar(), pn::longName(pn::s_output)
-    );
-    if(check < 0) {
-        ERROR_MESSAGE("snprintf failed");
-        return MStatus::kFailure;
-    }
+    std::string melCmdTemplate = loadResource("MEL/createPhyllotaxis.mel");
+    std::string melCmd = std::vformat(melCmdTemplate, std::make_format_args(
+        curveName.asChar(),
+        fnPhyllotaxisNode.name().asChar(),
+        pn::longName(pn::s_curve),
+        fnPhyllotaxisNode.name().asChar(),
+        pn::longName(pn::s_output)
+    ));
 
-    MGlobal::displayInfo(buf);
-    status = MGlobal::executeCommand(buf);
+    MGlobal::displayInfo(melCmd.c_str());
+    status = MGlobal::executeCommand(melCmd.c_str());
     CHECK(status, status);
 
     return MStatus::kSuccess;

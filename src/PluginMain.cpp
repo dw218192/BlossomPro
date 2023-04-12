@@ -30,6 +30,7 @@
 #include "MayaNodes/BSPlineSurfaceNode.h"
 #include "MayaNodes/CurveNode.h"
 #include "MayaNodes/CurveInstanceNode.h"
+#include "Utils.h"
 
 static constexpr std::pair<char const*, MCreatorFunction> g_cmds[] = {
     { "unitTest", UnitTestCmd::creator },
@@ -44,18 +45,6 @@ static constexpr std::tuple<char const*, MTypeId*, MCreatorFunction, MInitialize
     { BSplineSurfaceNode::nodeName(), &BSplineSurfaceNode::id, BSplineSurfaceNode::creator, BSplineSurfaceNode::initialize},
     { CurveInstanceNode::nodeName(), &CurveInstanceNode::id, CurveInstanceNode::creator, CurveInstanceNode::initialize}
 };
-
-static void loadAndExecuteMelScript(char const* scriptFileName) {
-    QString const filePath = QString{ ":/" } + scriptFileName;
-    QFile file { filePath };
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        MGlobal::displayError(MQtUtil::toMString(QString{ "Failed to load " } + filePath));
-        return;
-    }
-    QString const script = QTextStream{ &file }.readAll();
-    file.close();
-    MGlobal::executeCommand(MQtUtil::toMString(script), true, false);
-}
 
 MStatus initializePlugin( MObject obj )
 {

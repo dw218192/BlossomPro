@@ -13,7 +13,7 @@ private:
 
 public:
 	explicit KeyframeCurveEditor(QWidget* parent = nullptr);
-	std::shared_ptr<UserCurveLenFunction> getFunction() {
+	std::shared_ptr<UserCurveLenFunction> getFunction() const {
 		return m_ui.curveWidget->getFunction();
 	}
 signals:

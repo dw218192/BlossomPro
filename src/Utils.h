@@ -38,3 +38,6 @@ inline bool operator==(MString const& mstr, std::string const& str) {
 inline bool operator!=(MString const& mstr, std::string const& str) {
 	return str != mstr;
 }
+
+std::string loadResource(char const* path);
+void loadAndExecuteMelScript(char const* scriptFileName);

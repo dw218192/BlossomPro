@@ -25,6 +25,8 @@ struct KeyframeCurveLenFunction : public UserCurveLenFunction {
     void addControlPoint(double x, double y);
     void insert(ControlPointArray::ConstIterator it, double x, double y);
     void setControlPoint(ControlPointArray::ConstIterator it, double x, double y);
+    void setControlPoints(ControlPointArray::ConstIterator first, ControlPointArray::ConstIterator last);
+
     SplineType getType() const;
     double getScale() const {
         return m_yScale;

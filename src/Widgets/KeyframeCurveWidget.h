@@ -3,8 +3,10 @@
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QtGui/QMouseEvent>
-#include <glm/glm.hpp>
+#include <QVector>
 
+#include <glm/glm.hpp>
+#include "WidgetDataSaver.h"
 #include "../Phyllotaxis/KeyframeCurveLenFunction.h"
 
 class KeyframeCurveWidget : public QOpenGLWidget, protected QOpenGLFunctions {
@@ -21,10 +23,12 @@ public:
     using SplineType = KeyframeCurveLenFunction::SplineType;
 
 	explicit KeyframeCurveWidget(QWidget* parent = nullptr, SplineType type = SplineType::Linear);
-    void setYScale(double scale);
+
+	void setYScale(double scale);
     void setSplineType(SplineType type);
-    void updateCurve();
-    std::shared_ptr<UserCurveLenFunction> getFunction() const {
+    void setControlPoints(ControlPointArray::ConstIterator first, ControlPointArray::ConstIterator last);
+
+	std::shared_ptr<UserCurveLenFunction> getFunction() const {
         return std::make_shared<KeyframeCurveLenFunction>(m_func.getControlPoints(), m_func.getType(), m_func.getScale());
     }
 
@@ -32,6 +36,7 @@ signals:
     void curveChanged();
 
 private:
+    void updateCurve();
     m4 getProjection() const;
     void renderText(QPainter& painter, glm::ivec2 screenPos, QString text);
     void drawGrid();

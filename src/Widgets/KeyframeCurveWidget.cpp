@@ -17,7 +17,7 @@ static constexpr double k_evalStep = 0.01;
 using kfcw = KeyframeCurveWidget;
 
 kfcw::KeyframeCurveWidget(QWidget* parent, SplineType type)
-	: QOpenGLWidget(parent),
+	: QOpenGLWidget{ parent },
 	  m_yScale(1.0),
 	  m_viewMin{0, 0},
 	  m_viewMax{1, 1},
@@ -35,7 +35,6 @@ kfcw::KeyframeCurveWidget(QWidget* parent, SplineType type)
 void kfcw::setYScale(double scale) {
 	m_yScale = glm::clamp(scale, 1.0, 1000.0);
 	m_func.setYScale(m_yScale);
-
 	updateCurve();
 }
 
@@ -43,6 +42,12 @@ void kfcw::setSplineType(SplineType type) {
 	m_func.setType(type);
 	updateCurve();
 }
+
+void KeyframeCurveWidget::setControlPoints(ControlPointArray::ConstIterator first, ControlPointArray::ConstIterator last) {
+	m_func.setControlPoints(first, last);
+	updateCurve();
+}
+
 
 void kfcw::renderText(QPainter& painter, glm::ivec2 screenPos, QString text) {
 	painter.setPen(Qt::yellow);
@@ -106,9 +111,6 @@ void kfcw::drawSpline() {
 		}
 		glEnd();
 	}
-
-	// highlight the control points
-	// using m_x and m_y
 
 	glPointSize(5.0f);
 	glBegin(GL_POINTS);

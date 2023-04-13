@@ -30,7 +30,11 @@ static kfclf::SplineType trans(tk::spline::spline_type type) {
 }
 
 kfclf::KeyframeCurveLenFunction(ControlPointArray controlPoints, SplineType type, double scale)
-	: m_controlPoints{std::move(controlPoints)}, m_splineType{trans(type)}, m_yScale(scale) { }
+	: m_controlPoints{std::move(controlPoints)}, m_splineType{trans(type)}, m_yScale(scale) {
+	if (m_controlPoints.size() >= 3) {
+		m_spline.set_points(m_controlPoints.getX(), m_controlPoints.getY(), m_splineType);
+	}
+}
 
 double kfclf::operator()(double s) const {
 	return m_yScale * std::max(0.0, m_spline(s));
@@ -95,6 +99,17 @@ void kfclf::setControlPoint(ControlPointArray::ConstIterator cit, double x, doub
 	it->first = x;
 	it->second = y;
 	if (valid()) {
+		m_spline.set_points(m_controlPoints.getX(), m_controlPoints.getY(), m_splineType);
+	}
+}
+
+void kfclf::setControlPoints(ControlPointArray::ConstIterator first, ControlPointArray::ConstIterator last) {
+	m_controlPoints.clear();
+	for (; first != last; ++first) {
+		auto [x, y] = *first;
+		m_controlPoints.add(x, y);
+	}
+	if(valid()) {
 		m_spline.set_points(m_controlPoints.getX(), m_controlPoints.getY(), m_splineType);
 	}
 }

@@ -168,6 +168,8 @@ if (MSVC)
   target_compile_options(${PROJECT_NAME} PUBLIC "/Zc:__cplusplus")
 endif ()
 
+target_compile_definitions(${PROJECT_NAME} PUBLIC -DBLOSSOM_PRO)
+
 # link our libs
 target_link_libraries (${PROJECT_NAME} 
 	PhyllotaxisGenerator

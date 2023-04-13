@@ -30,9 +30,17 @@ static QPixmap getPreview(UserCurveLenFunction const& func) {
         yMin = std::min(yMin, y);
         yMax = std::max(yMax, y);
     }
+
     std::optional<QPointF> lastPoint;
     for (double x = 0; x < 1; x += 0.01) {
-        double y = func(x);
+    	double y = func(x);
+
+        // make sure y is in [0.25, 0.75]
+        y -= yMin;
+        y /= yMax - yMin;
+        y *= 0.5;
+        y += 0.25;
+
         QPointF point{ x * width, (1 - y) * height };
         if (lastPoint) {
         	painter.drawLine(*lastPoint, point);
@@ -55,7 +63,7 @@ KeyframeCurveEditor::KeyframeCurveEditor(QWidget* parent)
     // populate the save curve list
     m_dataSaver.loadData();
 
-    auto listWidget = m_ui.savedCurveList;
+    auto const listWidget = m_ui.savedCurveList;
     listWidget->clear();
 	for (auto&& curve : m_savedCurves) {
         auto pfunc = UserCurveLenFunction::deserialize(curve.toUtf8());

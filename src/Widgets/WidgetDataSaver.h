@@ -3,8 +3,20 @@
 #include <QString>
 #include <QMetaProperty>
 #include <QDebug>
+#include <QStandardPaths>
+
+
+#ifndef BLOSSOM_PRO
+#include <QCoreApplication>
+#else
+#include <QDir>
+#include <maya/MGlobal.h>
+#include <maya/MQtUtil.h>
+#endif
 #include <cassert>
-#include <qcoreapplication.h>
+
+
+
 
 class WidgetDataSaver {
 public:
@@ -18,26 +30,45 @@ public:
                 m_path.prepend("/");
             }
         }
-
+#ifndef BLOSSOM_PRO
         qDebug()
-    		<< "WidgetDataSaver: saving data at \n"
+    		<< "WidgetDataSaver: saving data at "
     		<< getSetting().fileName()
+			<< "using format"
+			<< getSetting().format()
     		<< "\n";
+#else
+        MGlobal::displayInfo("WidgetDataSaver: saving data at " + MQtUtil::toMString(getSetting().fileName()));
+#endif
     }
     WidgetDataSaver(WidgetDataSaver&) = delete;
     WidgetDataSaver(WidgetDataSaver&&) = delete;
 
     bool shouldSaveProperty(const QMetaProperty& property) {
-        QString name{ property.name() };
+        QString const name{ property.name() };
         return name.startsWith("prop_") && property.isReadable() && property.isWritable() && property.isStored();
     }
 
     QSettings getSetting() {
+#ifndef BLOSSOM_PRO
         return QSettings {
-		    QCoreApplication::instance()->applicationDirPath() + '/' + 
+            QCoreApplication::applicationDirPath() + '/' +
             QCoreApplication::instance()->applicationName() + ".ini",
 		    QSettings::Format::IniFormat
         };
+#else
+        QDir const dir{ QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) };
+        if (!dir.exists()) {
+            if (!dir.mkpath(".")) {
+                MGlobal::displayError("WidgetDataSaver: failed to create save directory");
+            }
+        }
+        return QSettings{
+             dir.path() +
+            "/BlossomPro.ini",
+		    QSettings::Format::IniFormat
+        };
+#endif
     }
     void saveData() {
         QSettings settings = getSetting();
@@ -60,11 +91,11 @@ public:
                 QVariant value = property.read(m_owner);
 
             	settings.setValue(key, value);
-                settings.sync();
             }
         }
 
         settings.endGroup();
+        settings.sync();
     }
 
     void loadData() {

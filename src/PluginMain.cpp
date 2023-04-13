@@ -14,7 +14,7 @@
 #include <maya/MVector.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MStringArray.h>
-
+#include <maya/MQtUtil.h>
 #include <QTextStream>
 
 #include "Phyllotaxis/PhyllotaxisNode.h"
@@ -32,11 +32,12 @@
 #include "MayaNodes/CurveInstanceNode.h"
 #include "Utils.h"
 
-static constexpr std::pair<char const*, MCreatorFunction> g_cmds[] = {
-    { "unitTest", UnitTestCmd::creator },
-    { "createTestWindow", WindowCmd<TestWindow>::creator },
-    { "createPhyllotaxisWindow", WindowCmd<PhyllotaxisEditor>::creator },
-    { "createBSplineSurfaceWindow", WindowCmd<CreateBSplineSurfaceWindow>::creator }
+using CmdCleanupFunction = void(*)();
+static constexpr std::tuple<char const*, MCreatorFunction, CmdCleanupFunction> g_cmds[] = {
+    { "unitTest", UnitTestCmd::creator, nullptr },
+    { "createTestWindow", WindowCmd<TestWindow>::creator, WindowCmd<TestWindow>::cleanup },
+    { "createPhyllotaxisWindow", WindowCmd<PhyllotaxisEditor>::creator, WindowCmd<PhyllotaxisEditor>::cleanup },
+    { "createBSplineSurfaceWindow", WindowCmd<CreateBSplineSurfaceWindow>::creator,  WindowCmd<CreateBSplineSurfaceWindow>::cleanup }
 };
 static constexpr std::tuple<char const*, MTypeId*, MCreatorFunction, MInitializeFunction> g_nodes[] = {
     { CurveNode::nodeName(), &CurveNode::s_id, CurveNode::creator, CurveNode::initialize },
@@ -51,8 +52,9 @@ MStatus initializePlugin( MObject obj )
     MStatus status = MStatus::kSuccess;
     MFnPlugin plugin( obj, "BlossomPro", "1.0", "Any");
 
-    // register commands
-    for(auto&& [cmdDesc, func] : g_cmds) {
+
+	// register commands
+    for(auto&& [cmdDesc, func, _] : g_cmds) {
         status = plugin.registerCommand(cmdDesc, func);
         CHECK(status, status);
     }
@@ -75,9 +77,13 @@ MStatus uninitializePlugin( MObject obj)
     MFnPlugin plugin( obj );
 
     // Deregister commands
-    for (auto&& [cmdDesc, func] : g_cmds) {
+    for (auto&& [cmdDesc, func, cleanup] : g_cmds) {
         status = plugin.deregisterCommand(cmdDesc);
         CHECK(status, status);
+
+        if(cleanup) {
+            cleanup();
+        }
     }
     // Deregister nodes
     for (auto&& [nodeName, id, creator, initializer] : g_nodes) {

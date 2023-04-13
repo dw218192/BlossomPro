@@ -28,6 +28,7 @@ struct WindowCmd : public MPxCommand {
 	}
 	static void cleanup() {
 		delete m_window;
+		MGlobal::displayInfo("free window");
 	}
 private:
 	static inline T* m_window = nullptr;

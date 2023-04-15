@@ -16,8 +16,6 @@
 #include <cassert>
 
 
-
-
 class WidgetDataSaver {
 public:
     explicit WidgetDataSaver(QWidget* widget) : m_owner(widget) {
@@ -44,16 +42,16 @@ public:
     WidgetDataSaver(WidgetDataSaver&) = delete;
     WidgetDataSaver(WidgetDataSaver&&) = delete;
 
-    bool shouldSaveProperty(const QMetaProperty& property) {
+    static bool shouldSaveProperty(const QMetaProperty& property) {
         QString const name{ property.name() };
         return name.startsWith("prop_") && property.isReadable() && property.isWritable() && property.isStored();
     }
 
-    QSettings getSetting() {
+    static QSettings getSetting() {
 #ifndef BLOSSOM_PRO
         return QSettings {
             QCoreApplication::applicationDirPath() + '/' +
-            QCoreApplication::instance()->applicationName() + ".ini",
+            QCoreApplication::applicationName() + ".ini",
 		    QSettings::Format::IniFormat
         };
 #else
@@ -70,7 +68,7 @@ public:
         };
 #endif
     }
-    void saveData() {
+    void saveData() const {
         QSettings settings = getSetting();
     	settings.beginGroup(m_path);
 
@@ -98,7 +96,7 @@ public:
         settings.sync();
     }
 
-    void loadData() {
+    void loadData() const {
         QSettings settings = getSetting();
         settings.beginGroup(m_path);
 

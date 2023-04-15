@@ -33,6 +33,9 @@ private slots:
 	void on_deleteBtn_clicked();
 
 private:
+	void addSavedCurve(char const* serializedFunc, bool displayOnly = true);
+	void addSavedCurve(UserCurveLenFunction const& func, bool displayOnly = true);
+
 	Ui::KeyframeCurveEditor m_ui;
 	WidgetDataSaver m_dataSaver;
 	QStringList m_savedCurves;

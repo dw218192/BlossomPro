@@ -8,6 +8,8 @@
 #include <QPen>
 #include <memory>
 
+#include "Phyllotaxis/KeyframeCurveLenFunction.h"
+
 using stype = KeyframeCurveWidget::SplineType;
 
 
@@ -50,6 +52,8 @@ static QPixmap getPreview(UserCurveLenFunction const& func) {
     return preview;
 }
 
+
+
 KeyframeCurveEditor::KeyframeCurveEditor(QWidget* parent)
 	: QWidget(parent), m_dataSaver{this} {
     m_ui.setupUi(this);
@@ -65,10 +69,23 @@ KeyframeCurveEditor::KeyframeCurveEditor(QWidget* parent)
 
     auto const listWidget = m_ui.savedCurveList;
     listWidget->clear();
-	for (auto&& curve : m_savedCurves) {
-        auto pfunc = UserCurveLenFunction::deserialize(curve.toUtf8());
-        auto const& func = *pfunc;
-        listWidget->addItem(new QListWidgetItem{ getPreview(func),"" });
+
+    // populate default curves if the user hasn't save any curves
+    if (m_savedCurves.empty()) {
+        addSavedCurve(KeyframeCurveLenFunction{
+            ControlPointArray { {0, 0}, {0.5, 0.5}, {1, 1} },
+            KeyframeCurveLenFunction::SplineType::Linear,
+            1.0
+        }, false);
+        addSavedCurve(KeyframeCurveLenFunction{
+            ControlPointArray { {0, 1}, {0.25, 0.2}, {0.5, 0.4}, {1, 1} },
+            KeyframeCurveLenFunction::SplineType::C1,
+            1.0
+        }, false);
+    } else {
+        for (auto&& curve : m_savedCurves) {
+            addSavedCurve(curve.toUtf8());
+        }
     }
 }
 
@@ -98,10 +115,7 @@ void KeyframeCurveEditor::on_saveBtn_clicked() {
     auto const cw = m_ui.curveWidget;
     auto const pfunc = cw->getFunction();
     auto const& func = *pfunc;
-
-    m_ui.savedCurveList->addItem(new QListWidgetItem{ getPreview(func),"" });
-    auto const serialized = cw->getFunction()->serialize();
-    m_savedCurves.push_back(QString::fromUtf8(serialized.c_str()));
+    addSavedCurve(func, false);
 }
 
 void KeyframeCurveEditor::on_loadBtn_clicked() {
@@ -124,5 +138,19 @@ void KeyframeCurveEditor::on_deleteBtn_clicked() {
         auto const item = lw->takeItem(index);
         m_savedCurves.removeAt(index);
     	delete item;
+    }
+}
+
+void KeyframeCurveEditor::addSavedCurve(char const* serializedFunc, bool displayOnly) {
+    auto const pfunc = UserCurveLenFunction::deserialize(serializedFunc);
+    addSavedCurve(*pfunc, displayOnly);
+}
+
+void KeyframeCurveEditor::addSavedCurve(UserCurveLenFunction const& func, bool displayOnly) {
+    m_ui.savedCurveList->addItem(new QListWidgetItem{ getPreview(func),"" });
+    std::string const serialized = func.serialize();
+
+    if (!displayOnly) {
+        m_savedCurves.push_back(QString::fromUtf8(serialized.c_str()));
     }
 }

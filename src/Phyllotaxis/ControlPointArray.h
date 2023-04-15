@@ -50,6 +50,13 @@ public:
     using Iterator = BaseIterator<typename std::vector<double>::iterator>;
     using ConstIterator = BaseIterator<typename std::vector<double>::const_iterator>;
 
+    ControlPointArray() = default;
+    ControlPointArray(std::initializer_list<std::pair<double, double>> values) {
+	    for(auto [x, y] : values) {
+            add(x, y);
+	    }
+    }
+
     Iterator begin() { return { m_x.begin(), m_y.begin() }; }
     Iterator end() { return { m_x.end(), m_y.end() }; }
     ConstIterator begin() const { return { m_x.cbegin(), m_y.cbegin() }; }
@@ -90,4 +97,5 @@ public:
     bool operator!=(ControlPointArray const& other) const {
         return !(*this == other);
     }
+
 };

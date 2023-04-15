@@ -52,7 +52,6 @@ MStatus initializePlugin( MObject obj )
     MStatus status = MStatus::kSuccess;
     MFnPlugin plugin( obj, "BlossomPro", "1.0", "Any");
 
-
 	// register commands
     for(auto&& [cmdDesc, func, _] : g_cmds) {
         status = plugin.registerCommand(cmdDesc, func);

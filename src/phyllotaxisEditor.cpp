@@ -52,7 +52,7 @@ MStatus PhyllotaxisEditor::updatePhyllotaxisNode() {
     int const numIter = m_ui.numIterSpinBpx->value();
     double const step = m_ui.integStepDoubleBox->value();
 
-    MPlug plug = fnPhyllotaxisNode.findPlug(pn::longName(pn::s_serializedCurveFunc), false, &status);
+    MPlug plug = fnPhyllotaxisNode.findPlug(pn::longName(pn::s_curveFunc), false, &status);
     CHECK(status, status);
     {
         MString test;

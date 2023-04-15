@@ -27,9 +27,9 @@ MStatus PhyllotaxisNode::initialize() {
 		&status);
 	CHECK(status, status);
 
-	s_serializedCurveFunc = typedAttribute.create(
-		longName(s_serializedCurveFunc),
-		shortName(s_serializedCurveFunc),
+	s_curveFunc = typedAttribute.create(
+		longName(s_curveFunc),
+		shortName(s_curveFunc),
 		MFnData::kString,
 		&status);
 	CHECK(status, status);
@@ -62,7 +62,7 @@ MStatus PhyllotaxisNode::initialize() {
 
 	status = addAttribute(s_curve);
 	CHECK(status, status);
-	status = addAttribute(s_serializedCurveFunc);
+	status = addAttribute(s_curveFunc);
 	CHECK(status, status);
 	status = addAttribute(s_numIter);
 	CHECK(status, status);
@@ -73,7 +73,7 @@ MStatus PhyllotaxisNode::initialize() {
 
 	status = attributeAffects(s_curve, s_output);
 	CHECK(status, status);
-	status = attributeAffects(s_serializedCurveFunc, s_output);
+	status = attributeAffects(s_curveFunc, s_output);
 	CHECK(status, status);
 	status = attributeAffects(s_numIter, s_output);
 	CHECK(status, status);
@@ -97,17 +97,9 @@ MStatus PhyllotaxisNode::compute(const MPlug& plug, MDataBlock& data) {
 	int const numIter = data.inputValue(s_numIter, &status).asInt();
 	CHECK(status, status);
 
-	MString const serializedCurve = data.inputValue(s_serializedCurveFunc, &status).asString();
+	HANDLE_EXCEPTION(s_curveFunc.inputValue(m_curveFunc, data, &status));
 	CHECK(status, status);
 
-	if(!m_curveFunc || m_curveFunc->serialize() != serializedCurve) {
-		HANDLE_EXCEPTION(m_curveFunc = UserCurveLenFunction::deserialize(serializedCurve.asChar()));
-	}
-
-	if(!m_curveFunc || !m_curveFunc->valid()) {
-		ERROR_MESSAGE("curveFunc is not set or valid");
-		return MStatus::kInvalidParameter;
-	}
 	double const step = data.inputValue(s_step, &status).asDouble();
 	CHECK(status, status);
 
@@ -117,10 +109,7 @@ MStatus PhyllotaxisNode::compute(const MPlug& plug, MDataBlock& data) {
 	m_grammar = std::make_unique<PhyllotaxisGrammar>(std::move(curveInfo), m_curveFunc, step);
 	HANDLE_EXCEPTION(m_grammar->process(numIter));
 
-	MGlobal::displayInfo("here");
-
 	MFnArrayAttrsData arrayAttrsData;
-
 	MObject aadObj = arrayAttrsData.create(&status);
 	CHECK(status, status);
 

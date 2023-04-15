@@ -1,6 +1,7 @@
 #pragma once
 #include <maya/MPxNode.h>
 #include <memory>
+#include "UserCurveLenFuncAttribute.h"
 
 struct UserCurveLenFunction;
 struct PhyllotaxisGrammar;
@@ -8,13 +9,20 @@ struct PhyllotaxisGrammar;
 class PhyllotaxisNode : public MPxNode
 {
 public:
+	static inline MTypeId s_id{ 0xdeae };
+	static inline MObject s_curve;
+	static inline UserCurveLenFuncAttribute s_curveFunc;
+	static inline MObject s_numIter;
+	static inline MObject s_step;
+	static inline MObject s_output;
+
 	static constexpr char const* nodeName() {
 		return "PhyllotaxisNode";
 	}
 	static constexpr char const* longName(MObject const& attr) {
 		if(&attr == &s_curve) {
 			return "curve";
-		} else if(&attr == &s_serializedCurveFunc) {
+		} else if(&attr == &s_curveFunc) {
 			return "serializedCurveFunc";
 		} else if (&attr == &s_numIter) {
 			return "numIter";
@@ -28,7 +36,7 @@ public:
 	static constexpr char const* shortName(MObject const& attr) {
 		if (&attr == &s_curve) {
 			return "cv";
-		} else if (&attr == &s_serializedCurveFunc) {
+		} else if (&attr == &s_curveFunc) {
 			return "scf";
 		} else if (&attr == &s_numIter) {
 			return "ni";
@@ -41,13 +49,6 @@ public:
 	}
 	static void* creator();
 	static MStatus initialize();
-
-	static inline MTypeId s_id{ 0xdeae };
-	static inline MObject s_curve;
-	static inline MObject s_serializedCurveFunc; // used to identify an instance of UserCurveLenFunction
-	static inline MObject s_numIter;
-	static inline MObject s_step;
-	static inline MObject s_output;
 
 
 	PhyllotaxisNode() = default;

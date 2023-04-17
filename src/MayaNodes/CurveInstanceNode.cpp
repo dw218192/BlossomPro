@@ -63,7 +63,7 @@ MStatus CurveInstanceNode::initialize()
 
     // input attributes
     CurveInstanceNode::instanceCount = nAttr.create("InstanceCount", "icount", MFnNumericData::kInt, 3);
-    nAttr.setMin(4.0);
+    nAttr.setMin(3.0);
     MAKE_INPUT(nAttr)
     addAttribute(CurveInstanceNode::instanceCount);
 

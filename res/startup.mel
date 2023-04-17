@@ -3,3 +3,4 @@ $blossomProMenu = `menu -p $gMainWindow -label "BlossomPro"`;
 	menuItem -label "createTestWindow" -command "createTestWindow";
 	menuItem -label "createPhyllotaxisWindow" -command "createPhyllotaxisWindow";
 	menuItem -label "createBSplineSurface" -command "createBSplineSurfaceWindow";
+	menuItem -label "curveInstance" -command "curveInstanceWindow";

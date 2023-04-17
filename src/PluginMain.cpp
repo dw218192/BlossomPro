@@ -22,6 +22,7 @@
 #include "testwindow.h"
 #include "phyllotaxisEditor.h"
 #include "CreateBSplineSurfaceWindow.h"
+#include "CurveInstanceWindow.h"
 
 #include "Cmds/UnitTestCmd.h"
 #include "Cmds/WindowCmd.h"
@@ -37,7 +38,8 @@ static constexpr std::tuple<char const*, MCreatorFunction, CmdCleanupFunction> g
     { "unitTest", UnitTestCmd::creator, nullptr },
     { "createTestWindow", WindowCmd<TestWindow>::creator, WindowCmd<TestWindow>::cleanup },
     { "createPhyllotaxisWindow", WindowCmd<PhyllotaxisEditor>::creator, WindowCmd<PhyllotaxisEditor>::cleanup },
-    { "createBSplineSurfaceWindow", WindowCmd<CreateBSplineSurfaceWindow>::creator,  WindowCmd<CreateBSplineSurfaceWindow>::cleanup }
+    { "createBSplineSurfaceWindow", WindowCmd<CreateBSplineSurfaceWindow>::creator,  WindowCmd<CreateBSplineSurfaceWindow>::cleanup },
+    { "curveInstanceWindow", WindowCmd<CurveInstanceWindow>::creator,  WindowCmd<CurveInstanceWindow>::cleanup },
 };
 static constexpr std::tuple<char const*, MTypeId*, MCreatorFunction, MInitializeFunction> g_nodes[] = {
     { CurveNode::nodeName(), &CurveNode::s_id, CurveNode::creator, CurveNode::initialize },

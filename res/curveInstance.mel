@@ -1,0 +1,9 @@
+$CenterSphere = `polySphere`;
+$Instancer = `instancer`;
+$CurveInstanceNode = `createNode CurveInstanceNode`;
+
+connectAttr ($CenterSphere[0] + ".t") ($CurveInstanceNode + ".icenter");
+connectAttr {}.worldSpace ($CurveInstanceNode + ".icurve");
+connectAttr ($CurveInstanceNode + ".otrans") ($Instancer + ".inputPoints");
+setAttr ($CurveInstanceNode + ".icount") {};
+connectAttr {}.matrix ($Instancer + ".inputHierarchy[0]");

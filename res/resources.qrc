@@ -4,5 +4,6 @@
     <file>cleanup.mel</file>
     <file>startup.mel</file>
     <file>createBSplineSurface.mel</file>
+	<file>curveInstance.mel</file>
   </qresource>
 </RCC>

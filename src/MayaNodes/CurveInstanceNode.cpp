@@ -131,7 +131,7 @@ MStatus CurveInstanceNode::compute(const MPlug& plug, MDataBlock& data)
 
         float length = curveInfo->length();
 
-        MVector baseVec = center - curveInfo->getPoint(0.f);
+        MVector baseVec(1, 0, 0);
 
         for (int i = 0; i < instanceCount; ++i)
         {

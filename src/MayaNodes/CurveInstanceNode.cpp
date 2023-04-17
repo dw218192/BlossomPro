@@ -22,14 +22,15 @@
 #include <glm/glm.hpp>
 #include <format>
 
-#define MAKE_INPUT(attr) attr.setKeyable(true);\
-                         attr.setStorable(true);\
-                         attr.setReadable(true);\
-                         attr.setWritable(true);
-
-#define MAKE_OUT(attr)   attr.setKeyable(false);\
-                         attr.setStorable(true);\
-                         attr.setReadable(true);
+#define MAKE_INPUT(attr) //attr.setKeyable(true);\
+                         //attr.setStorable(true);\
+                         //attr.setReadable(true);\
+                         //attr.setWritable(true);
+                         //
+#define MAKE_OUT(attr)   //attr.setKeyable(false);\
+                         //attr.setStorable(false);\
+                         //attr.setReadable(true);\
+                         //attr.setWritable(false);
 //attr.setWritable(false);
 
 MTypeId CurveInstanceNode::id(0x80002);
@@ -44,6 +45,8 @@ inline T Lerp(const T& a, const T&b, const T& u)
 {
     return a - a * u + u * b;
 }
+
+inline float toDegree(float radiance) { return glm::degrees(radiance); }
 
 void* CurveInstanceNode::creator()
 {
@@ -81,6 +84,8 @@ MStatus CurveInstanceNode::initialize()
     MAKE_OUT(tAttr)
     addAttribute(CurveInstanceNode::outTransforms);
 
+    returnStatus = attributeAffects(CurveInstanceNode::inputCurve, CurveInstanceNode::outTransforms);
+
     returnStatus = attributeAffects(CurveInstanceNode::inputCenter, CurveInstanceNode::outTransforms);
     returnStatus = attributeAffects(CurveInstanceNode::inputRotate, CurveInstanceNode::outTransforms);
     returnStatus = attributeAffects(CurveInstanceNode::instanceCount, CurveInstanceNode::outTransforms);
@@ -93,6 +98,7 @@ MStatus CurveInstanceNode::compute(const MPlug& plug, MDataBlock& data)
     MStatus returnStatus;
     if (plug == CurveInstanceNode::outTransforms)
     {
+        // get inputs from data
         int instanceCount = data.inputValue(CurveInstanceNode::instanceCount, &returnStatus).asInt();
         CHECK(returnStatus, returnStatus);
 
@@ -107,9 +113,11 @@ MStatus CurveInstanceNode::compute(const MPlug& plug, MDataBlock& data)
         MObject curveObj = data.inputValue(CurveInstanceNode::inputCurve, &returnStatus).asNurbsCurveTransformed();
         CHECK(returnStatus, returnStatus);
 
+        // get curve
         auto curveInfo = std::make_unique<CurveInfo>(curveObj, &returnStatus);
         CHECK(returnStatus, returnStatus);
 
+        // configurate output array
         MFnArrayAttrsData arrayAttrsData;
         MObject aadObj = arrayAttrsData.create(&returnStatus);
         CHECK(returnStatus, returnStatus);
@@ -119,9 +127,6 @@ MStatus CurveInstanceNode::compute(const MPlug& plug, MDataBlock& data)
         MVectorArray scales = arrayAttrsData.vectorArray("scale", &returnStatus);
         CHECK(returnStatus, returnStatus);
         MVectorArray rotations = arrayAttrsData.vectorArray("rotation", &returnStatus);
-        CHECK(returnStatus, returnStatus);
-        
-        MVectorArray rotationsPivot = arrayAttrsData.vectorArray("localRotatePivot", &returnStatus);
         CHECK(returnStatus, returnStatus);
 
         float length = curveInfo->length();
@@ -133,16 +138,17 @@ MStatus CurveInstanceNode::compute(const MPlug& plug, MDataBlock& data)
             MVector point = curveInfo->getPoint(Lerp<float>(0.f, length, static_cast<float>(i) / static_cast<float>(instanceCount - 1)));
             positions.append(point);
 
+            // make the instanced object toward the center
             MVector dir = center - point;
             MEulerRotation eulerRotate(rotate);
             MQuaternion quat = baseVec.rotateTo(dir);
             MEulerRotation euler = quat.asEulerRotation();
-
+            
             MVector rv;
-            rv.x = 180.f * euler.x / 3.1415f;
-            rv.y = 180.f * euler.y / 3.1415f;
-            rv.z = 180.f * euler.z / 3.1415f;
-
+            rv.x = toDegree(euler.x);
+            rv.y = toDegree(euler.y);
+            rv.z = toDegree(euler.z);
+            
             rotations.append(rv);
         }
 

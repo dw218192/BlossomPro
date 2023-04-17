@@ -43,14 +43,14 @@ MObject ControlPlaneNode::oPreCC;
 MObject ControlPlaneNode::iCurrentPlane;
 MObject ControlPlaneNode::oControlPlane;
 
-#define MAKE_INPUT(attr) attr.setKeyable(true);\
-                         attr.setStorable(true);\
-                         attr.setReadable(true);\
-                         attr.setWritable(true);
-
-#define MAKE_OUT(attr)   attr.setKeyable(false);\
-                         attr.setStorable(true);\
-                         attr.setReadable(true);
+#define MAKE_INPUT(attr) //attr.setKeyable(true);\
+                         //attr.setStorable(true);\
+                         //attr.setReadable(true);\
+                         //attr.setWritable(true);
+                         //
+#define MAKE_OUT(attr)   //attr.setKeyable(false);\
+                         //attr.setStorable(false);\
+                         //attr.setReadable(true);\
                          //attr.setWritable(false);
 
 #define Index(h_size, w, h) ((h_size) * (w) + (h))

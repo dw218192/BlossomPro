@@ -7,6 +7,7 @@
 #include <maya/MPxNode.h>
 #include <maya/MStatus.h>
 #include <maya/MObject.h>
+#include <maya/MPointArray.h>
 
 class BSplineSurfaceNode : public MPxNode
 {
@@ -18,6 +19,7 @@ public:
 
 private:
 	void MakeMesh(std::vector<std::vector<glm::vec3>>& controlPoints, 
+				  MPointArray& points,
 				  int subdivisionWidth, 
 				  int subdivisionHeight,
 				  MObject& meshData, 

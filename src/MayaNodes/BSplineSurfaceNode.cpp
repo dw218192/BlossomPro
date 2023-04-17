@@ -35,15 +35,15 @@ MObject BSplineSurfaceNode::inCPSW;
 MObject BSplineSurfaceNode::inCPSH;
 MObject BSplineSurfaceNode::outSurface;
 
-#define MAKE_INPUT(attr) attr.setKeyable(true);\
-                         attr.setStorable(true);\
-                         attr.setReadable(true);\
-                         attr.setWritable(true);
-
-#define MAKE_OUT(attr)   attr.setKeyable(false);\
-                         attr.setStorable(false);\
-                         attr.setReadable(true);\
-                         attr.setWritable(false);
+#define MAKE_INPUT(attr) //attr.setKeyable(true);\
+                         //attr.setStorable(true);\
+                         //attr.setReadable(true);\
+                         //attr.setWritable(true);
+                         //
+#define MAKE_OUT(attr)   //attr.setKeyable(false);\
+                         //attr.setStorable(false);\
+                         //attr.setReadable(true);\
+                         //attr.setWritable(false);
 
 #define Index(h_size, w, h) ((h_size) * (w) + (h))
 
@@ -127,11 +127,13 @@ MStatus BSplineSurfaceNode::compute(const MPlug& plug, MDataBlock& data)
         MFnMeshData dataCreator;
         MObject newOutputData = dataCreator.create(&returnStatus);
 
+        MPointArray points;
+
         // make new Mesh for output BSPlineSurface surface
-        this->MakeMesh(controlPoints, sw, sh, newOutputData, returnStatus);
+        this->MakeMesh(controlPoints, points, sw, sh, newOutputData, returnStatus);
 
         MDataHandle outputHandle = data.outputValue(BSplineSurfaceNode::outSurface, &returnStatus);
-        outputHandle.set(newOutputData);
+        outputHandle.setMObject(newOutputData);
         data.setClean(plug);
     }
     else
@@ -140,6 +142,7 @@ MStatus BSplineSurfaceNode::compute(const MPlug& plug, MDataBlock& data)
 }
 
 void BSplineSurfaceNode::MakeMesh(std::vector<std::vector<glm::vec3>>& controlPoints,
+                                  MPointArray& points,
                                   int subdivisionWidth,
                                   int subdivisionHeight,
                                   MObject& meshData,
@@ -155,7 +158,7 @@ void BSplineSurfaceNode::MakeMesh(std::vector<std::vector<glm::vec3>>& controlPo
     bs00.makeKnots();
 
     // make new mesh
-    MPointArray points;
+    //MPointArray points;
     MIntArray faceCounts;
     MIntArray faceConnects;
 

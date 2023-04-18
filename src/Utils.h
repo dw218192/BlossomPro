@@ -1,7 +1,12 @@
 #pragma once
 #include <maya/MStatus.h>
-#include <exception>
 #include <maya/MString.h>
+#include <maya/MPlug.h>
+#include <maya/MObject.h>
+#include <maya/MFnDependencyNode.h>
+
+#include <exception>
+
 
 #define HANDLE_EXCEPTION(func_call)\
 do{\
@@ -41,3 +46,23 @@ inline bool operator!=(MString const& mstr, std::string const& str) {
 
 std::string loadResource(char const* path);
 void loadAndExecuteMelScript(char const* scriptFileName);
+
+template<typename T>
+MStatus updateAttr(MObject const& node, char const* attrName, T&& value) {
+    MStatus status = MStatus::kSuccess;
+    MFnDependencyNode const fnNode{ node };
+
+    MPlug plug = fnNode.findPlug(attrName, false, &status);
+    CHECK(status, status);
+    {
+        T test;
+        status = plug.getValue(test);
+        CHECK(status, status);
+
+        if (test != value) {
+            status = plug.setValue(std::forward<T>(value));
+            CHECK(status, status);
+        }
+    }
+    return status;
+}

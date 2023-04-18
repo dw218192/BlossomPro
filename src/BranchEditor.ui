@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>562</width>
+    <height>827</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="KeyframeCurveEditor" name="keyframeCurveEditor"/>
+     </item>
+     <item>
+      <widget class="KeyframeCurveEditor" name="keyframeCurveEditor_2"/>
+     </item>
+     <item>
+      <widget class="KeyframeCurveEditor" name="keyframeCurveEditor_3"/>
+     </item>
+     <item>
+      <widget class="KeyframeCurveEditor" name="keyframeCurveEditor_4"/>
+     </item>
+     <item>
+      <widget class="KeyframeCurveEditor" name="keyframeCurveEditor_5"/>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>KeyframeCurveEditor</class>
+   <extends>QOpenGLWidget</extends>
+   <header>Widgets/KeyframeCurveEditor.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

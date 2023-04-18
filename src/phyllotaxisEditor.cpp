@@ -47,50 +47,22 @@ MStatus PhyllotaxisEditor::updatePhyllotaxisNode() {
     using pn = PhyllotaxisNode;
 
     MStatus status;
-    MFnDependencyNode fnPhyllotaxisNode{ m_phyllotaxisNodeInstance };
 
-    int const numIter = m_ui.numIterSpinBpx->value();
-    double const step = m_ui.integStepDoubleBox->value();
-
-    MPlug plug = fnPhyllotaxisNode.findPlug(pn::longName(pn::s_curveFunc), false, &status);
+    status = updateAttr(m_phyllotaxisNodeInstance,
+        pn::longName(pn::s_curveFunc),
+        MString{ m_func->serialize().c_str() });
     CHECK(status, status);
-    {
-        MString test;
-        status = plug.getValue(test);
-        CHECK(status, status);
 
-        std::string const str = m_func->serialize();
-        if (test != str) {
-            status = plug.setString(str.c_str());
-            CHECK(status, status);
-        }
-    }
-
-    plug = fnPhyllotaxisNode.findPlug(pn::longName(pn::s_numIter), false, &status);
+    status = updateAttr(m_phyllotaxisNodeInstance,
+        pn::longName(pn::s_numIter),
+        m_ui.numIterSpinBpx->value());
     CHECK(status, status);
-    {
-        int test;
-        status = plug.getValue(test);
-        CHECK(status, status);
 
-        if (test != numIter) {
-            status = plug.setInt(numIter);
-            CHECK(status, status);
-        }
-    }
-
-    plug = fnPhyllotaxisNode.findPlug(pn::longName(pn::s_step), false, &status);
+    status = updateAttr(m_phyllotaxisNodeInstance,
+        pn::longName(pn::s_step),
+        m_ui.integStepDoubleBox->value());
     CHECK(status, status);
-    {
-        double test;
-        status = plug.getValue(test);
-        CHECK(status, status);
 
-        if (std::abs(test - step) > std::numeric_limits<double>::epsilon()) {
-            status = plug.setDouble(step);
-            CHECK(status, status);
-        }
-    }
     return MStatus::kSuccess;
 }
 

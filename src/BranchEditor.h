@@ -1,7 +1,7 @@
 #pragma once
 
 #include "include/ui_BranchEditor.h"
-#include "Phyllotaxis/UserCurveLenFunction.h"
+#include "CurveLenFunction/UserCurveLenFunction.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class BranchEditor; }

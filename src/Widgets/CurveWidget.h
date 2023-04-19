@@ -2,7 +2,7 @@
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <memory>
-#include "../Phyllotaxis/UserCurveLenFunction.h"
+#include "../CurveLenFunction/UserCurveLenFunction.h"
 
 class CurveWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {

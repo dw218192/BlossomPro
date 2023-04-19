@@ -7,7 +7,7 @@
 
 #include <glm/glm.hpp>
 #include "WidgetDataSaver.h"
-#include "../Phyllotaxis/KeyframeCurveLenFunction.h"
+#include "../CurveLenFunction/KeyframeCurveLenFunction.h"
 
 class KeyframeCurveWidget : public QOpenGLWidget, protected QOpenGLFunctions {
     Q_OBJECT

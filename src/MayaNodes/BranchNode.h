@@ -3,7 +3,7 @@
 #include <array>
 #include <maya/MPxNode.h>
 
-#include "Phyllotaxis/UserCurveLenFuncAttribute.h"
+#include "CurveLenFunction//UserCurveLenFuncAttribute.h"
 
 struct UserCurveLenFunction;
 
@@ -46,7 +46,7 @@ public:
 	static void* creator();
 	static MStatus initialize();
 
-	static inline MTypeId s_id{ 0xdeae };
+	static inline MTypeId s_id{ 0xbeae };
 	static inline MObject s_curve;
 	static inline MObject s_numIter;
 	static inline MObject s_step;

@@ -8,7 +8,7 @@
 #include <QPen>
 #include <memory>
 
-#include "Phyllotaxis/KeyframeCurveLenFunction.h"
+#include "CurveLenFunction/KeyframeCurveLenFunction.h"
 
 using stype = KeyframeCurveWidget::SplineType;
 

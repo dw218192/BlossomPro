@@ -1,7 +1,7 @@
 #pragma once
 #include <maya/MPxNode.h>
 #include <memory>
-#include "UserCurveLenFuncAttribute.h"
+#include "../CurveLenFunction/UserCurveLenFuncAttribute.h"
 
 struct UserCurveLenFunction;
 struct PhyllotaxisGrammar;

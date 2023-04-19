@@ -5,8 +5,8 @@
 #include <maya/MQtUtil.h>
 #include <maya/MFnDependencyNode.h>
 
-#include "Phyllotaxis/Grammar.h"
-#include "Phyllotaxis/PlanarPhyllotaxisGrammar.h"
+#include "Grammar/Grammar.h"
+#include "Grammar/PlanarPhyllotaxisGrammar.h"
 #include "../MayaNodes/CurveNode.h"
 #include "../Utils.h"
 

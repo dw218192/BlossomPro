@@ -1,5 +1,5 @@
 #include "CurveNode.h"
-#include "../Phyllotaxis/CurveInfo.h"
+#include "../CurveLenFunction/CurveInfo.h"
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnArrayAttrsData.h>

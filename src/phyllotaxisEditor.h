@@ -1,7 +1,7 @@
 #pragma once
 #include "include/ui_phyllotaxisEditor.h"
-#include "Phyllotaxis/UserCurveLenFunction.h"
-#include "Phyllotaxis/PhyllotaxisGrammar.h"
+#include "CurveLenFunction/UserCurveLenFunction.h"
+#include "Grammar/PhyllotaxisGrammar.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class PhyllotaxisEditor; }

@@ -1,6 +1,6 @@
 #include "phyllotaxisEditor.h"
-#include "Phyllotaxis/PhyllotaxisNode.h"
-#include "Phyllotaxis/ExpressionCurveLenFunction.h"
+#include "MayaNodes/PhyllotaxisNode.h"
+#include "CurveLenFunction/ExpressionCurveLenFunction.h"
 
 #include <maya/MGlobal.h>
 #include <maya/MQtUtil.h>

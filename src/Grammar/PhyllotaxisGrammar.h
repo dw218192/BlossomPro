@@ -1,7 +1,7 @@
 #pragma once
 #include "Grammar.h"
-#include "CurveInfo.h"
-#include "UserCurveLenFunction.h"
+#include "../CurveLenFunction/CurveInfo.h"
+#include "../CurveLenFunction/UserCurveLenFunction.h"
 
 struct PhyllotaxisGrammar : public Grammar {
 	PhyllotaxisGrammar() = delete;

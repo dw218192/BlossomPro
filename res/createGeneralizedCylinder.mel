@@ -1,0 +1,46 @@
+string $planarCurve;
+string $extrusionCurve;
+
+// Get the selected objects
+string $selection[] = `ls -selection`;
+
+// Check if exactly 2 objects are selected
+if (size($selection) != 2) {
+    error "Please select 2 curves.";
+} else {
+    $planarCurve = $selection[0];
+    $extrusionCurve = $selection[1];
+}
+
+int $numSteps = 10;
+float $stepSize = 0.1;
+string $cmd = "loft -ch 1 -rn 0 -ar 1 -ss 1 -u 1 -c 0 -rsn true -po 1 " + $planarCurve;
+
+for ($i = 1; $i < $numSteps; $i++) {
+    float $t = float($i) / float($numSteps - 1);
+    vector $extrusionPoint = `pointOnCurve -pr $t $extrusionCurve`;
+    
+    // Duplicate the planar curve and move it to center at the extrusion point
+    string $names[] = `duplicate $planarCurve`;
+    $curCurve = "extrudedCurve" + $i;
+    rename $names[0] $curCurve;
+
+    float $x = $extrusionPoint.x;
+    float $y = $extrusionPoint.y;
+    float $z = $extrusionPoint.z;
+    move $x $y $z $curCurve;
+    
+    // Scale the extruded curve
+    float $scale = 1.0 + $i * $stepSize;
+    scale $scale $scale $scale $curCurve;
+
+    // Create a mesh by lofting the extruded curve and the previous curve
+    string $prevCurve = ($i > 1) ? ("excurve" + ($i - 1)) : $planarCurve;
+
+    $cmd += " " + $curCurve;
+}
+
+evalEcho $cmd;
+
+// Cleanup
+delete "extrudedCurve*";

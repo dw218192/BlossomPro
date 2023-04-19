@@ -1,7 +1,7 @@
 #include "CurveInstanceNode.h"
 #include "../Utils.h"
 #include <memory>
-#include "Phyllotaxis/CurveInfo.h"
+#include "CurveLenFunction/CurveInfo.h"
 
 #include <maya/MGlobal.h>
 

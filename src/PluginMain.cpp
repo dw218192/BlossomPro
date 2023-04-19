@@ -17,9 +17,8 @@
 #include <maya/MQtUtil.h>
 #include <QTextStream>
 
-#include "Phyllotaxis/PhyllotaxisNode.h"
+#include "MayaNodes/PhyllotaxisNode.h"
 
-#include "testwindow.h"
 #include "phyllotaxisEditor.h"
 #include "CreateBSplineSurfaceWindow.h"
 #include "CurveInstanceWindow.h"
@@ -39,7 +38,6 @@
 using CmdCleanupFunction = void(*)();
 static constexpr std::tuple<char const*, MCreatorFunction, CmdCleanupFunction> g_cmds[] = {
     { "unitTest", UnitTestCmd::creator, nullptr },
-    { "createTestWindow", WindowCmd<TestWindow>::creator, WindowCmd<TestWindow>::cleanup },
     { "createPhyllotaxisWindow", WindowCmd<PhyllotaxisEditor>::creator, WindowCmd<PhyllotaxisEditor>::cleanup },
     { "createBSplineSurfaceWindow", WindowCmd<CreateBSplineSurfaceWindow>::creator,  WindowCmd<CreateBSplineSurfaceWindow>::cleanup },
     { "curveInstanceWindow", WindowCmd<CurveInstanceWindow>::creator,  WindowCmd<CurveInstanceWindow>::cleanup },

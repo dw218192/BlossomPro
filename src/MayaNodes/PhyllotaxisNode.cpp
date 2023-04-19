@@ -1,6 +1,6 @@
 #include "PhyllotaxisNode.h"
-#include "UserCurveLenFunction.h"
-#include "PhyllotaxisGrammar.h"
+#include "../CurveLenFunction/UserCurveLenFunction.h"
+#include "../Grammar/PhyllotaxisGrammar.h"
 #include "../Utils.h"
 #include <maya/MGlobal.h>
 #include <maya/MFnTypedAttribute.h>

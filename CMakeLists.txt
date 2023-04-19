@@ -20,8 +20,6 @@ endif()
 
 # main lib srcs
 file(GLOB EXPRESSION_PARSER_SRCS "src/ExpressionParser/*.cpp")
-file(GLOB WIDGET_SRCS "src/Widgets/*.cpp" "src/Widgets/*.h")
-file(GLOB PHYLLOTAXIS_SRCS "src/Phyllotaxis/*.cpp" "src/Phyllotaxis/*.h")
 file(GLOB BSPLINE_SURFACE_SRCS "src/BSplineSurface/*.cpp" "src/BSplineSurface/*.h")
 file(GLOB RESOURCE_FILES "res/*.qrc")
 
@@ -46,14 +44,28 @@ set(BSPLINE_SURFACE_INCLUDE "src/BSplineSurface/")
 file(GLOB SOURCE_FILES ${SOURCE_FILES} 
 	"src/*.cpp" 
 	"src/*.h"
+	"src/Cmds/*.h" 
 	"src/Cmds/*.cpp" 
+	"src/MayaNodes/*.h"
 	"src/MayaNodes/*.cpp"
-	${WIDGET_SRCS}
+	"src/Grammar/*.h"
+	"src/Grammar/*.cpp"
+	"src/CurveLenFunction/*.h"
+	"src/CurveLenFunction/*.cpp"
+	"src/Widgets/*.h"
+	"src/Widgets/*.cpp"
 )
 
 # test app srcs
 file(GLOB EXPRESSION_TEST_SRCS "src/TestExpressionParser/*.cpp")
-file(GLOB WIDGET_TEST_SRCS "src/TestWidgets/*.cpp")
+file(GLOB WIDGET_TEST_SRCS 
+	"src/TestWidgets/*.h"
+	"src/TestWidgets/*.cpp"
+	"src/Widgets/*.h"
+	"src/Widgets/*.cpp"
+	"src/CurveLenFunction/*.h"
+	"src/CurveLenFunction/*.cpp")
+
 file(GLOB BSPLINE_SURF_TEST_SRCS "src/TestBSplineSurface/*.cpp")
 
 # our libs
@@ -65,17 +77,6 @@ target_include_directories(ExpressionParser
 
 find_package(Qt5 REQUIRED COMPONENTS Widgets Gui OpenGL Core)
 find_package(OpenGL REQUIRED)
-
-add_library (PhyllotaxisGenerator STATIC ${PHYLLOTAXIS_SRCS})
-target_include_directories (PhyllotaxisGenerator
-	PUBLIC
-		${GLM_INCLUDE}
-)
-target_link_libraries (PhyllotaxisGenerator 
-	PRIVATE
-		ExpressionParser
-		libspline
-)
 
 add_library(BSplineSurface STATIC ${BSPLINE_SURFACE_SRCS})
 target_include_directories(BSplineSurface
@@ -94,15 +95,17 @@ target_link_libraries(ExpressionParserTest
 		ExpressionParser
 )
 
-add_executable(WidgetTest ${WIDGET_TEST_SRCS} ${WIDGET_SRCS})
+add_executable(WidgetTest ${WIDGET_TEST_SRCS})
 target_include_directories(WidgetTest
 	PRIVATE
+		${GLM_INCLUDE}
+		${PROJECT_SOURCE_DIR}/include
 		${SRC_ROOT}
 )
 target_link_libraries(WidgetTest
 	PRIVATE
 		OpenGL::GL
-		PhyllotaxisGenerator
+		ExpressionParser
 		Qt5::Widgets Qt5::Gui Qt5::OpenGL Qt5::Core
 		libspline
 )
@@ -172,7 +175,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC -DBLOSSOM_PRO)
 
 # link our libs
 target_link_libraries (${PROJECT_NAME} 
-	PhyllotaxisGenerator
+	ExpressionParser
 	libspline
 	BSplineSurface
 )

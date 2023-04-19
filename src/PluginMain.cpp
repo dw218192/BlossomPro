@@ -23,6 +23,7 @@
 #include "phyllotaxisEditor.h"
 #include "CreateBSplineSurfaceWindow.h"
 #include "CurveInstanceWindow.h"
+#include "BranchEditor.h"
 
 #include "Cmds/UnitTestCmd.h"
 #include "Cmds/WindowCmd.h"
@@ -31,6 +32,8 @@
 #include "MayaNodes/BSPlineSurfaceNode.h"
 #include "MayaNodes/CurveNode.h"
 #include "MayaNodes/CurveInstanceNode.h"
+#include "MayaNodes/BranchNode.h"
+
 #include "Utils.h"
 
 using CmdCleanupFunction = void(*)();
@@ -40,13 +43,16 @@ static constexpr std::tuple<char const*, MCreatorFunction, CmdCleanupFunction> g
     { "createPhyllotaxisWindow", WindowCmd<PhyllotaxisEditor>::creator, WindowCmd<PhyllotaxisEditor>::cleanup },
     { "createBSplineSurfaceWindow", WindowCmd<CreateBSplineSurfaceWindow>::creator,  WindowCmd<CreateBSplineSurfaceWindow>::cleanup },
     { "curveInstanceWindow", WindowCmd<CurveInstanceWindow>::creator,  WindowCmd<CurveInstanceWindow>::cleanup },
+    { "createBranchWindow", WindowCmd<BranchEditor>::creator, WindowCmd<BranchEditor>::cleanup }
 };
+
 static constexpr std::tuple<char const*, MTypeId*, MCreatorFunction, MInitializeFunction> g_nodes[] = {
     { CurveNode::nodeName(), &CurveNode::s_id, CurveNode::creator, CurveNode::initialize },
     { PhyllotaxisNode::nodeName(), &PhyllotaxisNode::s_id, PhyllotaxisNode::creator, PhyllotaxisNode::initialize },
     { ControlPlaneNode::nodeName(), &ControlPlaneNode::id, ControlPlaneNode::creator, ControlPlaneNode::initialize },
     { BSplineSurfaceNode::nodeName(), &BSplineSurfaceNode::id, BSplineSurfaceNode::creator, BSplineSurfaceNode::initialize},
-    { CurveInstanceNode::nodeName(), &CurveInstanceNode::id, CurveInstanceNode::creator, CurveInstanceNode::initialize}
+    { CurveInstanceNode::nodeName(), &CurveInstanceNode::id, CurveInstanceNode::creator, CurveInstanceNode::initialize},
+    { BranchNode::nodeName(), &BranchNode::s_id, BranchNode::creator, BranchNode::initialize  }
 };
 
 MStatus initializePlugin( MObject obj )

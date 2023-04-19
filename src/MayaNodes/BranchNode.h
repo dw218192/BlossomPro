@@ -2,8 +2,8 @@
 
 #include <array>
 #include <maya/MPxNode.h>
-#include <memory>
-#include "UserCurveLenFuncAttribute.h"
+
+#include "Phyllotaxis/UserCurveLenFuncAttribute.h"
 
 struct UserCurveLenFunction;
 

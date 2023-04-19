@@ -15,7 +15,7 @@ struct WindowCmd : public MPxCommand {
 	auto doIt(const MArgList& args)->MStatus override {
 		try {
 			if (!m_window) {
-				m_window = new T{ nullptr x }; //MQtUtil::mainWindow()
+				m_window = new T{ nullptr }; //MQtUtil::mainWindow()
 				m_window->setWindowFlags(m_window->windowFlags() | Qt::WindowMinimizeButtonHint | Qt::WindowStaysOnTopHint);
 				m_window->setWindowModality(Qt::NonModal);
 

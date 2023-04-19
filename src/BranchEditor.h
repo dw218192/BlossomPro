@@ -19,5 +19,5 @@ private:
 // private slots:
 
 private:
-    Ui::BranchEditor m_ui;
+    Ui::BranchEditor m_ui{};
 };

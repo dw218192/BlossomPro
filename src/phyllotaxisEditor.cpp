@@ -70,9 +70,6 @@ PhyllotaxisEditor::PhyllotaxisEditor(QWidget* parent) :
     QDialog(parent) {
     m_ui.setupUi(this);
 
-    setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint | Qt::WindowStaysOnTopHint);
-    setWindowModality(Qt::NonModal);
-
     m_densityFuncExpr = m_ui.expressionPlainTextEdit->toPlainText().toStdString();
 	m_densityFuncMirror = m_ui.mirrorCheckBox->isChecked();
     m_densityFuncEditType = static_cast<DensityFuncEditType>(m_ui.tabWidget->currentIndex());

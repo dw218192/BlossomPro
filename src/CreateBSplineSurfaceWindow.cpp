@@ -13,7 +13,6 @@ CreateBSplineSurfaceWindow::CreateBSplineSurfaceWindow(QWidget* parent)
 	: QDialog(parent)
 {
 	ui.setupUi(this);
-	setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint);
 }
 
 CreateBSplineSurfaceWindow::~CreateBSplineSurfaceWindow()

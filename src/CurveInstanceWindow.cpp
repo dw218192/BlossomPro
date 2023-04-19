@@ -19,7 +19,6 @@ CurveInstanceWindow::CurveInstanceWindow(QWidget* parent)
 	: QDialog(parent)
 {
 	ui.setupUi(this);
-	setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint);
 }
 
 CurveInstanceWindow::~CurveInstanceWindow()

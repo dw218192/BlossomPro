@@ -19,7 +19,7 @@
 
 #include "MayaNodes/PhyllotaxisNode.h"
 
-#include "phyllotaxisEditor.h"
+#include "PhyllotaxisEditor.h"
 #include "CreateBSplineSurfaceWindow.h"
 #include "CurveInstanceWindow.h"
 #include "BranchEditor.h"

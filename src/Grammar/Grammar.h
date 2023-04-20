@@ -1,12 +1,16 @@
 #pragma once
 #include <maya/MVector.h>
+#include <maya/MEulerRotation.h>
 #include <maya/MMatrix.h>
+
 #include <stack>
 #include <vector>
 
 struct GrammarResult {
-	GrammarResult(MVector const& pos, MVector const& scale) : pos(pos), scale(scale) {}
+	GrammarResult(MVector const& pos, MEulerRotation const& rot, MVector const& scale)
+		: pos{ pos }, rotation{ rot }, scale{ scale } {}
 	MVector pos;
+	MEulerRotation rotation;
 	MVector scale;
 };
 

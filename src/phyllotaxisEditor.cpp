@@ -1,11 +1,9 @@
-#include "phyllotaxisEditor.h"
+#include "PhyllotaxisEditor.h"
 #include "MayaNodes/PhyllotaxisNode.h"
 #include "CurveLenFunction/ExpressionCurveLenFunction.h"
 
 #include <maya/MGlobal.h>
-#include <maya/MQtUtil.h>
 #include <maya/MSelectionList.h>
-#include <maya/MItSelectionList.h>
 #include <maya/MDagPath.h>
 #include <maya/MDGModifier.h>
 #include <maya/MFnTransform.h>
@@ -151,10 +149,7 @@ void PhyllotaxisEditor::on_createBtn_clicked() {
     MStatus status = MGlobal::getActiveSelectionList(selection);
     CHECK(status, (void)0);
 
-    MItSelectionList iter { selection, MFn::kNurbsCurve, &status };
-    CHECK(status, (void)0);
-
-    if (!iter.isDone()) {
+    if (selection.length() == 1) {
         MDagPath dagPath;
         status = selection.getDagPath(0, dagPath);
         CHECK(status, (void)0);
@@ -169,6 +164,6 @@ void PhyllotaxisEditor::on_createBtn_clicked() {
         status = updatePhyllotaxisNode();
         CHECK(status, (void)0);
     } else {
-        MGlobal::displayError("Please Select a NURBS curve first");
+        MGlobal::displayError("Please Select exactly one NURBS curve first");
     }
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include "include/ui_phyllotaxisEditor.h"
+#include "include/ui_PhyllotaxisEditor.h"
 #include "CurveLenFunction/UserCurveLenFunction.h"
 #include "Grammar/PhyllotaxisGrammar.h"
 

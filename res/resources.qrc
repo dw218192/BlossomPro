@@ -1,9 +1,10 @@
 <RCC>
   <qresource prefix="MEL">
+    <file>createBranchNode.mel</file>
     <file>createPhyllotaxis.mel</file>
     <file>cleanup.mel</file>
     <file>startup.mel</file>
     <file>createBSplineSurface.mel</file>
-	<file>curveInstance.mel</file>
+    <file>curveInstance.mel</file>
   </qresource>
 </RCC>

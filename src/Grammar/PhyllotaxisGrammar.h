@@ -4,9 +4,9 @@
 #include "../CurveLenFunction/UserCurveLenFunction.h"
 
 struct PhyllotaxisGrammar : public Grammar {
-	PhyllotaxisGrammar() = delete;
 	PhyllotaxisGrammar(std::unique_ptr<CurveInfo> info, std::shared_ptr<UserCurveLenFunction> func, double integrationStep = 0.0001)
-		: m_info(std::move(info)), m_densityFunc(func), m_integrationStep(integrationStep), m_a(0.0), m_s(0.0) {
+		: m_info(std::move(info)), m_densityFunc(func), m_integrationStep(integrationStep), m_a(0.0), m_s(0.0)
+	{
 		m_turtle.pitchUp(90); // start facing +y axis
 	}
 	bool hasNext() const override {
@@ -18,7 +18,7 @@ struct PhyllotaxisGrammar : public Grammar {
 		}
 
 		double const curveLen = m_info->length();
-		UserCurveLenFunction& densityFunc = *m_densityFunc;
+		auto const& densityFunc = *m_densityFunc;
 		// double x = m_info->getPoint(m_s).x;
 		// static constexpr double k_pi = 3.14159265358979323846;
 
@@ -42,7 +42,7 @@ struct PhyllotaxisGrammar : public Grammar {
 			.rotateRight(90)
 			.forward(x);
 
-		m_result.emplace_back(m_turtle.getPos(), MVector{scale, scale, scale});
+		m_result.emplace_back(m_turtle.getPos(), m_turtle.getRot(), MVector{scale, scale, scale});
 
 		m_turtle
 			.popState()

@@ -31,6 +31,7 @@ MStatus PhyllotaxisNode::initialize() {
 		longName(s_curveFunc),
 		shortName(s_curveFunc),
 		MFnData::kString,
+		MObject::kNullObj,
 		&status);
 	CHECK(status, status);
 
@@ -86,7 +87,7 @@ MStatus PhyllotaxisNode::initialize() {
 MStatus PhyllotaxisNode::compute(const MPlug& plug, MDataBlock& data) {
 	MStatus status;
 
-	if (plug != PhyllotaxisNode::s_output) {
+	if (plug != s_output) {
 		return MStatus::kUnknownParameter;
 	}
 
@@ -119,7 +120,7 @@ MStatus PhyllotaxisNode::compute(const MPlug& plug, MDataBlock& data) {
 	MVectorArray scales = arrayAttrsData.vectorArray("scale", &status);
 	CHECK(status, status);
 
-	for (auto [pos, scale] : m_grammar->result()) {
+	for (auto&& [pos, rot, scale] : m_grammar->result()) {
 		status = positions.append(pos);
 		CHECK(status, status);
 

@@ -4,10 +4,10 @@
 struct PlanarPhyllotaxisGrammar : public Grammar {
 	PlanarPhyllotaxisGrammar() : m_cur(0) {}
 
-	virtual bool hasNext() const override {
+	bool hasNext() const override {
 		return true;
 	}
-	virtual void nextIter() override {
+	void nextIter() override {
 		m_turtle
 			.rotateLeft(137.5)
 			.pushState()

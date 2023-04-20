@@ -1,19 +1,8 @@
-string $planarCurve;
-string $extrusionCurve;
-
-// Get the selected objects
-string $selection[] = `ls -selection`;
-
-// Check if exactly 2 objects are selected
-if (size($selection) != 2) {
-    error "Please select 2 curves.";
-} else {
-    $planarCurve = $selection[0];
-    $extrusionCurve = $selection[1];
-}
-
+string $planarCurve = "{}";
+string $extrusionCurve = "{}";
 int $numSteps = 10;
-float $stepSize = 0.1;
+float $stepSize = {};
+
 string $cmd = "loft -ch 1 -rn 0 -ar 1 -ss 1 -u 1 -c 0 -rsn true -po 1 " + $planarCurve;
 
 for ($i = 1; $i < $numSteps; $i++) {

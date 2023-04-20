@@ -6,7 +6,8 @@
 #include <maya/MFnDependencyNode.h>
 
 #include <exception>
-
+#include <variant>
+#include <optional>
 
 #define HANDLE_EXCEPTION(func_call)\
 do{\
@@ -66,3 +67,23 @@ MStatus updateAttr(MObject const& node, char const* attrName, T&& value) {
     }
     return status;
 }
+
+template <typename T, typename E = MStatus>
+struct Result  {
+    explicit constexpr Result() noexcept = default;
+
+    constexpr Result(T&& t) noexcept : m_data{ std::move(t) } {}
+    constexpr Result(E&& e) noexcept : m_data{ std::move(e) } {}
+    constexpr Result(T const& t) noexcept : m_data{ t } {}
+    constexpr Result(E const& e) noexcept : m_data{ e } {}
+
+    [[nodiscard]] constexpr auto valid() const noexcept { return std::holds_alternative<T>(m_data); }
+    [[nodiscard]] constexpr auto value() const & -> const T& { return std::get<0>(m_data); }
+    [[nodiscard]] constexpr auto value() & -> T& { return std::get<0>(m_data); }
+    [[nodiscard]] constexpr auto value() && -> T&& { return std::move(std::get<0>(m_data)); }
+    [[nodiscard]] constexpr auto error() const& -> const E& { return std::get<1>(m_data); }
+    [[nodiscard]] constexpr auto error() && -> E&& { return std::move(std::get<1>(m_data)); }
+
+private:
+    std::variant<T, E> m_data;
+};

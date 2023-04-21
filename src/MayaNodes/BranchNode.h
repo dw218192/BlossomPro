@@ -23,12 +23,13 @@ public:
 		ATTR_LN(generatingCurveName);
 		ATTR_LN(numIter);
 		ATTR_LN(step);
-		ATTR_LN(output);
 		ATTR_SN(funcs[0], "func0");
 		ATTR_SN(funcs[1], "func1");
 		ATTR_SN(funcs[2], "func2");
 		ATTR_SN(funcs[3], "func3");
 		ATTR_SN(funcs[4], "func4");
+
+		ATTR_LN(output);
 		return "";
 	}
 	static constexpr char const* shortName(MObject const& attr) {
@@ -37,12 +38,13 @@ public:
 		ATTR_SN(generatingCurveName, "ccvn");
 		ATTR_SN(numIter, "ni");
 		ATTR_SN(step, "st");
-		ATTR_SN(output, "ot");
 		ATTR_SN(funcs[0], "f0");
 		ATTR_SN(funcs[1], "f1");
 		ATTR_SN(funcs[2], "f2");
 		ATTR_SN(funcs[3], "f3");
 		ATTR_SN(funcs[4], "f4");
+
+		ATTR_SN(output, "ot");
 		return "";
 	}
 #undef ATTR_LN
@@ -57,8 +59,9 @@ public:
 	static inline MObject s_generatingCurveName;
 	static inline MObject s_numIter;
 	static inline MObject s_step;
-	static inline MObject s_output;
 	static inline std::array<UserCurveLenFuncAttribute, 5> s_funcs;
+
+	static inline MObject s_output;
 
 	BranchNode() = default;
 	~BranchNode() override = default;
@@ -75,4 +78,5 @@ private:
 	};
 
 	static Result<Inputs> getInputs(MDataBlock& data);
+	static Result<MObject> loft(MObject const& generatingCurveObj, MObject const& carrierCurveObj, double step);
 };

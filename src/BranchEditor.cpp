@@ -1,22 +1,45 @@
 #include "BranchEditor.h"
 
 #include <maya/MDagPath.h>
+#include <maya/MFnMesh.h>
+#include <maya/MFnTransform.h>
+#include <maya/MPointArray.h>
 #include <maya/MSelectionList.h>
 
 #include "Utils.h"
 #include "MayaNodes/BranchNode.h"
 
 
-static Result<MObject> createBranchNodeInstance(MString const& carrierName, MString const& generatingName) {
+Result<BranchEditor::BranchNodeNetwork> BranchEditor::createNetwork(MObject const& carrierCurve, MObject const& generatingCurve) {
     using bn = BranchNode;
 
     MStatus status = MStatus::kSuccess;
-    MObject node = MFnDependencyNode{}.create(bn::s_id, &status);
+    MObject branchNode = MFnDependencyNode{}.create(bn::s_id, &status);
     CHECK(status, status);
 
-    MFnDependencyNode const fnBranchNode { node, &status };
+    MObject const loftNode = MFnDependencyNode{}.create("loft", &status);
     CHECK(status, status);
 
+    MObject const tessNode = MFnDependencyNode{}.create("nurbsTessellate", &status);
+    CHECK(status, status);
+
+    MObject const transformNode = MFnTransform{}.create(MObject::kNullObj, &status);
+    CHECK(status, status);
+
+    MObject const meshNode = MFnMesh{}.create(0, 0, MPointArray{}, MIntArray{}, MIntArray{}, transformNode, &status);
+    CHECK(status, status);
+
+    auto const res = getName(generatingCurve);
+    if(!res.valid()) {
+        status = res.error();
+        CHECK(status, status);
+    }
+
+    updateAttr(branchNode, bn::longName(bn::s_generatingCurveName), res.value());
+    connectAttr(loftNode, "outputSurface", tessNode, "inputSurface");
+    connectAttr(tessNode, "outputPolygon", meshNode, "inMesh");
+
+/*
     std::string const melCmdTemplate = loadResource("MEL/createBranchNode.mel");
     std::string const melCmd = std::vformat(melCmdTemplate, std::make_format_args(
 	                                            carrierName.asChar(),
@@ -31,8 +54,13 @@ static Result<MObject> createBranchNodeInstance(MString const& carrierName, MStr
     MGlobal::displayInfo(mstrCmd);
     status = MGlobal::executeCommand(mstrCmd);
     CHECK(status, status);
+*/
+    BranchNodeNetwork ret;
+    ret.branchNodeObj = branchNode;
+    ret.loftNodeObj = loftNode;
 
-    return node;
+    updateNetwork(ret);
+    return ret;
 }
 
 BranchEditor::BranchEditor(QWidget* parent) : QDialog{ parent } {
@@ -43,10 +71,10 @@ BranchEditor::~BranchEditor() {
 	
 }
 
-MStatus BranchEditor::updateNode() {
+MStatus BranchEditor::updateNetwork(BranchNodeNetwork const& network) {
     using bn = BranchNode;
 
-    if(m_nodeInstance.isNull()) {
+    if(network.branchNodeObj.isNull()) {
         return MStatus::kSuccess;
     }
 
@@ -58,21 +86,23 @@ MStatus BranchEditor::updateNode() {
 	         std::pair{&(bn::s_funcs[3]), m_ui.keyframeCurveEditor_4},
 	         std::pair{&(bn::s_funcs[4]), m_ui.keyframeCurveEditor_5},
          }) {
-	    status = updateAttr(m_nodeInstance,
+	    status = updateAttr(network.branchNodeObj,
 	                        bn::longName(*attr),
 	                        MString{curveEditor->getFunction()->serialize().c_str()});
 	    CHECK(status, status);
     }
 
-    status = updateAttr(m_nodeInstance,
+    status = updateAttr(network.branchNodeObj,
         bn::longName(bn::s_numIter),
         m_ui.numIterSpinBpx->value());
     CHECK(status, status);
 
-    status = updateAttr(m_nodeInstance,
+    status = updateAttr(network.branchNodeObj,
         bn::longName(bn::s_step),
         m_ui.integStepDoubleBox->value());
     CHECK(status, status);
+
+    connectAttr(network.branchNodeObj, bn::longName(bn::s_output), network.loftNodeObj, "inputCurve");
 
     return MStatus::kSuccess;
 }
@@ -82,59 +112,56 @@ void BranchEditor::on_createBtn_clicked() {
     CHECK(status, (void)0);
 
 	if (selection.length() == 2) {
-        std::array<MString, 2> curveNames;
-        for (int i = 0; i < 2; ++i) {
-            MDagPath dagPath;
-            status = selection.getDagPath(i, dagPath);
-            CHECK(status, (void)0);
+        std::array<MObject, 2> curves;
 
-            MFnDagNode const dagNode{ dagPath };
-            curveNames[i] = dagNode.name(&status);
-            CHECK(status, (void)0);
-        }
-        auto const res = createBranchNodeInstance(curveNames[0], curveNames[1]);
+        status = selection.getDependNode(0, curves[0]);
+        CHECK(status, (void)0);
+
+        status = selection.getDependNode(1, curves[1]);
+        CHECK(status, (void)0);
+
+        auto const res = createNetwork(curves[0], curves[1]);
         if(!res.valid()) {
             CHECK(res.error(), (void)0);
         }
-        m_nodeInstance = res.value();
-        updateNode();
+        m_network = res.value();
     }
     else {
         MGlobal::displayError("Please Select exactly two NURBS curves, carrier curve followed by generating curve");
     }
 }
 
-void BranchEditor::on_numIterSpinBpx_valueChanged(int value) {
-	MStatus const status = updateNode();
+void BranchEditor::on_numIterSpinBpx_valueChanged([[maybe_unused]] int value) {
+	MStatus const status = updateNetwork(m_network);
 	CHECK(status, (void)(0));
 }
 
-void BranchEditor::on_integStepDoubleBox_valueChanged(double value) {
-	MStatus const status = updateNode();
-	CHECK(status, (void)(0));
+void BranchEditor::on_integStepDoubleBox_valueChanged([[maybe_unused]] double value) {
+    MStatus const status = updateNetwork(m_network);
+    CHECK(status, (void)(0));
 }
 
 void BranchEditor::on_keyframeCurveEditor_curveChanged() {
-	MStatus const status = updateNode();
-	CHECK(status, (void)(0));
+    MStatus const status = updateNetwork(m_network);
+    CHECK(status, (void)(0));
 }
 
 void BranchEditor::on_keyframeCurveEditor_2_curveChanged() {
-	MStatus const status = updateNode();
-	CHECK(status, (void)(0));
+    MStatus const status = updateNetwork(m_network);
+    CHECK(status, (void)(0));
 }
 
 void BranchEditor::on_keyframeCurveEditor_3_curveChanged() {
-	MStatus const status = updateNode();
-	CHECK(status, (void)(0));
+    MStatus const status = updateNetwork(m_network);
+    CHECK(status, (void)(0));
 }
 
 void BranchEditor::on_keyframeCurveEditor_4_curveChanged() {
-	MStatus const status = updateNode();
-	CHECK(status, (void)(0));
+    MStatus const status = updateNetwork(m_network);
+    CHECK(status, (void)(0));
 }
 
 void BranchEditor::on_keyframeCurveEditor_5_curveChanged() {
-	MStatus const status = updateNode();
-	CHECK(status, (void)(0));
+    MStatus const status = updateNetwork(m_network);
+    CHECK(status, (void)(0));
 }

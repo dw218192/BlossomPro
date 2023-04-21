@@ -15,7 +15,12 @@ public:
     ~BranchEditor() override;
 
 private:
-    MStatus updateNode();
+    struct BranchNodeNetwork {
+        MObject branchNodeObj;
+        MObject loftNodeObj;
+    };
+    Result<BranchNodeNetwork> createNetwork(MObject const& carrierCurve, MObject const& generatingCurve);
+    MStatus updateNetwork(BranchNodeNetwork const& network);
 
 private slots:
     void on_createBtn_clicked();
@@ -28,6 +33,6 @@ private slots:
     void on_keyframeCurveEditor_5_curveChanged();
 
 private:
-    MObject m_nodeInstance;
+    BranchNodeNetwork m_network;
     Ui::BranchEditor m_ui{};
 };

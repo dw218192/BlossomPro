@@ -2,8 +2,19 @@ connectAttr {0}.worldSpace {2}.{3};
 connectAttr {1}.worldSpace {2}.{4};
 setAttr -type "string" {2}.{5} "{1}";
 
+$loftNode = `createNode loft`;
+$numCurves = `getAttr -size {2}.{6}`;
+
+for($i = 0; $i < $numCurves; $i++) {
+	string $indexStr = "[" + $i + "]";
+	connectAttr ({2}.{6} + $indexStr + ".worldSpace") ($loftNode + ".inputCurve" + $indexStr);
+}
+
+$tessNode = `createNode nurbsTessellate`;
+connectAttr ($loftNode + ".outputSurface") ($tessNode + ".inputSurface");
+
 $transformNode = `createNode transform`;
 $meshNode = `createNode mesh -p $transformNode`;
-sets -add initialShadingGroup $meshNode;
 
-connectAttr {2}.{6} ($meshNode + ".inMesh");
+sets -add initialShadingGroup $meshNode;
+connectAttr ($tessNode + ".outputPolygon") ($meshNode + ".inMesh");

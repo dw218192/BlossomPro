@@ -4,10 +4,12 @@
 #include <maya/MPlug.h>
 #include <maya/MObject.h>
 #include <maya/MFnDependencyNode.h>
+#include <maya/MDGModifier.h>
+#include <maya/MGlobal.h>
 
 #include <exception>
 #include <variant>
-#include <optional>
+
 
 #define HANDLE_EXCEPTION(func_call)\
 do{\
@@ -45,6 +47,26 @@ inline bool operator!=(MString const& mstr, std::string const& str) {
 	return str != mstr;
 }
 
+template <typename T, typename E = MStatus>
+struct Result {
+    explicit constexpr Result() noexcept = default;
+
+    constexpr Result(T&& t) noexcept : m_data{ std::move(t) } {}
+    constexpr Result(E&& e) noexcept : m_data{ std::move(e) } {}
+    constexpr Result(T const& t) noexcept : m_data{ t } {}
+    constexpr Result(E const& e) noexcept : m_data{ e } {}
+
+    [[nodiscard]] constexpr auto valid() const noexcept { return std::holds_alternative<T>(m_data); }
+    [[nodiscard]] constexpr auto value() const& -> const T& { return std::get<0>(m_data); }
+    [[nodiscard]] constexpr auto value() & -> T& { return std::get<0>(m_data); }
+    [[nodiscard]] constexpr auto value() && -> T&& { return std::move(std::get<0>(m_data)); }
+    [[nodiscard]] constexpr auto error() const& -> const E& { return std::get<1>(m_data); }
+    [[nodiscard]] constexpr auto error() && -> E&& { return std::move(std::get<1>(m_data)); }
+
+private:
+    std::variant<T, E> m_data;
+};
+
 std::string loadResource(char const* path);
 void loadAndExecuteMelScript(char const* scriptFileName);
 
@@ -56,7 +78,7 @@ MStatus updateAttr(MObject const& node, char const* attrName, T&& value) {
     MPlug plug = fnNode.findPlug(attrName, false, &status);
     CHECK(status, status);
     {
-        T test;
+        std::decay_t<T> test;
         status = plug.getValue(test);
         CHECK(status, status);
 
@@ -68,22 +90,37 @@ MStatus updateAttr(MObject const& node, char const* attrName, T&& value) {
     return status;
 }
 
-template <typename T, typename E = MStatus>
-struct Result  {
-    explicit constexpr Result() noexcept = default;
+inline MStatus connectAttr(MObject const& from, char const* fromAttr, MObject const& to, char const* toAttr) {
+    MStatus status = MStatus::kSuccess;
+    MDGModifier dgModifier;
+    MFnDependencyNode const fnFrom{ from }, fnTo{ to };
+    MPlug const fromPlug = fnFrom.findPlug(fromAttr, false, &status);
+    CHECK(status, status);
 
-    constexpr Result(T&& t) noexcept : m_data{ std::move(t) } {}
-    constexpr Result(E&& e) noexcept : m_data{ std::move(e) } {}
-    constexpr Result(T const& t) noexcept : m_data{ t } {}
-    constexpr Result(E const& e) noexcept : m_data{ e } {}
+    MPlug const toPlug = fnTo.findPlug(toAttr, false, &status);
+    CHECK(status, status);
 
-    [[nodiscard]] constexpr auto valid() const noexcept { return std::holds_alternative<T>(m_data); }
-    [[nodiscard]] constexpr auto value() const & -> const T& { return std::get<0>(m_data); }
-    [[nodiscard]] constexpr auto value() & -> T& { return std::get<0>(m_data); }
-    [[nodiscard]] constexpr auto value() && -> T&& { return std::move(std::get<0>(m_data)); }
-    [[nodiscard]] constexpr auto error() const& -> const E& { return std::get<1>(m_data); }
-    [[nodiscard]] constexpr auto error() && -> E&& { return std::move(std::get<1>(m_data)); }
+    if(fromPlug.isArray() && toPlug.isArray()) {
+        unsigned int const numElements = fromPlug.numElements();
+        for (unsigned int i = 0; i < numElements; ++i) {
+            MPlug fromElement = fromPlug.elementByLogicalIndex(i, &status);
+            MPlug toElement = toPlug.elementByLogicalIndex(i, &status);
+            dgModifier.connect(fromElement, toElement);
+        }
+    } else {
+        dgModifier.connect(fromPlug, toPlug);
+    }
 
-private:
-    std::variant<T, E> m_data;
-};
+    dgModifier.doIt();
+
+    return status;
+}
+
+inline Result<MString> getName(MObject const& obj) {
+    MStatus status = MStatus::kSuccess;
+    MFnDependencyNode const fnBranchNode{ obj, &status };
+    CHECK(status, status);
+    MString ret = fnBranchNode.name(&status);
+    CHECK(status, status);
+    return ret;
+}

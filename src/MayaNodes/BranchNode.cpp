@@ -3,12 +3,16 @@
 
 #include <maya/MFnArrayAttrsData.h>
 #include <maya/MFnNumericAttribute.h>
-
+#include <maya/MFnNurbsSurface.h>
 #include <maya/MFnTypedAttribute.h>
+#include <maya/MArrayDataBuilder.h>
+#include <maya/MFnNurbsCurveData.h>
 #include <maya/MGlobal.h>
 
 #include <format>
 #include <maya/MDagPath.h>
+#include <maya/MFnTransform.h>
+#include <maya/MPointArray.h>
 #include <maya/MSelectionList.h>
 
 void* BranchNode::creator() {
@@ -76,10 +80,14 @@ MStatus BranchNode::initialize() {
 	s_output = typedAttribute.create(
 		longName(s_output),
 		shortName(s_output),
-		MFnData::kMesh,
+		MFnData::kNurbsCurve,
 		MObject::kNullObj,
 		&status
 	);
+	CHECK(status, status);
+	status = typedAttribute.setArray(true);
+	CHECK(status, status);
+	status = typedAttribute.setUsesArrayDataBuilder(true);
 	CHECK(status, status);
 
 	status = addAttribute(s_generatingCurve);
@@ -168,53 +176,44 @@ MStatus BranchNode::compute(MPlug const& plug, MDataBlock& data) {
 	auto curveInfo = std::make_unique<CurveInfo>(carrierCurveObj, &status);
 	CHECK(status, status);
 
-	auto grammar = std::make_unique<GeneralizedCylinderGrammar>(std::move(curveInfo), funcs, step);
+	auto const grammar = std::make_unique<GeneralizedCylinderGrammar>(std::move(curveInfo), funcs, step);
 	HANDLE_EXCEPTION(grammar->process(numIter));
 
-	MString loftCmd { "loft -ch 1 -rn 0 -ar 1 -ss 1 -u 1 -c 0 -rsn true -po 1 " };
-	loftCmd += generatingCurveName;
-
-	int cnt = 0;
-	for(auto const& [pos, rot, scale] : grammar->result()) {
-		std::string tmpCurveName = std::vformat("excurve{}", std::make_format_args(cnt++));
-		auto const cmdFmt =
-			"string $names[] = `duplicate {}`;\n"
-			"move {} {} {} $names[0];\n"
-			"rename $names[0] {};\n"
-//			"scale {} {} {} {};\n"
-//			"rotate -os -fo 0 0 0;\n"
-		;
-
-		std::string cmd = std::vformat(cmdFmt, std::make_format_args(
-				generatingCurveName.asChar(),
-				pos.x, pos.y, pos.z,
-				tmpCurveName.c_str()
-			));
-
-		status = MGlobal::executeCommand(cmd.c_str());
-		CHECK(status, status);
-
-		loftCmd += " ";
-		loftCmd += tmpCurveName.c_str();
-	}
-	loftCmd += ";";
-
-	MGlobal::displayInfo(loftCmd);
-
-	MStringArray result;
-	status = MGlobal::executeCommand(loftCmd, result);
+	MArrayDataHandle outCurveArrayHandle = data.outputArrayValue(s_output, &status);
 	CHECK(status, status);
 
-	MSelectionList selList;
-	selList.add(result[0]);
-	MDagPath dagPath;
-	selList.getDagPath(0, dagPath);
-	MObject loftedSurfaceObj = dagPath.node();
+	MArrayDataBuilder outCurveArrayBuilder{ &data, s_output, static_cast<unsigned>(grammar->result().size()), &status };
+	CHECK(status, status);
 
-	MDataHandle outputSurfaceHandle = data.outputValue(s_output);
-	outputSurfaceHandle.setMObject(loftedSurfaceObj);
-	outputSurfaceHandle.setClean();
+	int idx = 0;
+	for(auto const& [pos, rot, scale] : grammar->result()) {
+		MFnNurbsCurve curveFn;
+		MObject obj = curveFn.copy(generatingCurveObj, MObject::kNullObj, &status);
+		CHECK(status, status);
 
+		// Transform the duplicated curve to [pos, rot, scale]
+		MFnTransform transformFn;
+		MObject transformObj = transformFn.create(MObject::kNullObj, &status);
+		CHECK(status, status);
+
+		transformFn.setTranslation(pos, MSpace::kWorld);
+		transformFn.setRotation(rot);
+		double scales[3] = { scale.x, scale.y, scale.z };
+		transformFn.setScale(scales);
+
+		MFnDagNode dagNodeFn(transformObj, &status);
+		status = dagNodeFn.addChild(obj, MFnDagNode::kNextPos, true);
+		CHECK(status, status);
+
+		// Add it to the output array
+		MDataHandle elementHandle = outCurveArrayBuilder.addElement(idx++, &status);
+		CHECK(status, status);
+		elementHandle.setMObject(obj);
+		elementHandle.setClean();
+	}
+
+	outCurveArrayHandle.set(outCurveArrayBuilder);
+	outCurveArrayHandle.setAllClean();
 	data.setClean(plug);
 
 	return MS::kSuccess;

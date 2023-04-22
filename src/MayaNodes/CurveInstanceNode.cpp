@@ -18,6 +18,7 @@
 #include <maya/MTransformationMatrix.h>
 #include <maya/MQuaternion.h>
 #include <maya/MEulerRotation.h>
+#include <maya/MMatrix.h>
 
 #include <glm/glm.hpp>
 #include <format>
@@ -31,10 +32,10 @@
                          //attr.setStorable(false);\
                          //attr.setReadable(true);\
                          //attr.setWritable(false);
-//attr.setWritable(false);
 
 MTypeId CurveInstanceNode::id(0x80002);
 MObject CurveInstanceNode::instanceCount;
+MObject CurveInstanceNode::rotateAttenuation;
 MObject CurveInstanceNode::inputCenter;
 MObject CurveInstanceNode::inputRotate;
 MObject CurveInstanceNode::inputCurve;
@@ -47,6 +48,7 @@ inline T Lerp(const T& a, const T&b, const T& u)
 }
 
 inline float toDegree(float radiance) { return glm::degrees(radiance); }
+inline float toRadians(float radiance) { return glm::radians(radiance); }
 
 void* CurveInstanceNode::creator()
 {
@@ -66,6 +68,12 @@ MStatus CurveInstanceNode::initialize()
     nAttr.setMin(3.0);
     MAKE_INPUT(nAttr)
     addAttribute(CurveInstanceNode::instanceCount);
+
+    CurveInstanceNode::rotateAttenuation = nAttr.create("RotateAttenuation", "rattenuation", MFnNumericData::kFloat, 0.f);
+    nAttr.setMin(0.0);
+    nAttr.setMax(1.0);
+    MAKE_INPUT(nAttr)
+    addAttribute(CurveInstanceNode::rotateAttenuation);
 
     CurveInstanceNode::inputRotate = nAttr.create("InputRotate", "ir", MFnNumericData::k3Float);
     MAKE_INPUT(tAttr)
@@ -89,6 +97,7 @@ MStatus CurveInstanceNode::initialize()
     returnStatus = attributeAffects(CurveInstanceNode::inputCenter, CurveInstanceNode::outTransforms);
     returnStatus = attributeAffects(CurveInstanceNode::inputRotate, CurveInstanceNode::outTransforms);
     returnStatus = attributeAffects(CurveInstanceNode::instanceCount, CurveInstanceNode::outTransforms);
+    returnStatus = attributeAffects(CurveInstanceNode::rotateAttenuation, CurveInstanceNode::outTransforms);
 
     return returnStatus;
 }
@@ -102,8 +111,15 @@ MStatus CurveInstanceNode::compute(const MPlug& plug, MDataBlock& data)
         int instanceCount = data.inputValue(CurveInstanceNode::instanceCount, &returnStatus).asInt();
         CHECK(returnStatus, returnStatus);
 
+        float rotate_attenuation = data.inputValue(CurveInstanceNode::rotateAttenuation, &returnStatus).asFloat();
+        CHECK(returnStatus, returnStatus);
+
         float3& rotate = data.inputValue(CurveInstanceNode::inputRotate, &returnStatus).asFloat3();
         CHECK(returnStatus, returnStatus);
+
+        std::string temp = "rotate: [{}, {}, {}]";
+        MString info = std::vformat(temp, std::make_format_args(rotate[0], rotate[1], rotate[2])).c_str();
+        MGlobal::displayInfo(info);
 
         float3& c = data.inputValue(CurveInstanceNode::inputCenter, &returnStatus).asFloat3();
         CHECK(returnStatus, returnStatus);
@@ -140,14 +156,21 @@ MStatus CurveInstanceNode::compute(const MPlug& plug, MDataBlock& data)
 
             // make the instanced object toward the center
             MVector dir = center - point;
-            MEulerRotation eulerRotate(rotate);
-            MQuaternion quat = baseVec.rotateTo(dir);
-            MEulerRotation euler = quat.asEulerRotation();
             
+            MEulerRotation inv_obj_rotate(toRadians(rotate[0]), toRadians(rotate[1]), toRadians(rotate[2]));
+            inv_obj_rotate = inv_obj_rotate.inverse();
+
+            MQuaternion toward_center = baseVec.rotateTo(dir);
+
+            MEulerRotation obj_rotate(toRadians(rotate[0]), toRadians(rotate[1]), (1.f - rotate_attenuation) * toRadians(rotate[2]));
+
+            MEulerRotation result;
+            result = obj_rotate.asMatrix() * inv_obj_rotate.asMatrix() * toward_center.asMatrix();
+
             MVector rv;
-            rv.x = toDegree(euler.x);
-            rv.y = toDegree(euler.y);
-            rv.z = toDegree(euler.z);
+            rv.x = toDegree(result.x);
+            rv.y = toDegree(result.y);
+            rv.z = toDegree(result.z);
             
             rotations.append(rv);
         }

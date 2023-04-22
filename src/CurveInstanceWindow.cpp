@@ -36,11 +36,10 @@ void CurveInstanceWindow::on_Create_BN_clicked()
 	{
 		// run mel script to instance object
 		std::string mel_template = loadResource("MEL/curveInstance.mel");
-		std::string cmds = std::vformat(mel_template, std::make_format_args(curve_name.toStdString(), instance_count, obj_name.toStdString()));
+		std::string cmds = std::vformat(mel_template, std::make_format_args(curve_name.toStdString(), instance_count, obj_name.toStdString(), obj_name.toStdString()));
 
 		MString M_cmd(cmds.c_str());
 
-		MGlobal::displayInfo(M_cmd);
 		MGlobal::executeCommand(M_cmd);
 	}
 

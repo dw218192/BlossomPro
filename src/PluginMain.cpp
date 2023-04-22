@@ -31,7 +31,6 @@
 #include "MayaNodes/BSPlineSurfaceNode.h"
 #include "MayaNodes/CurveNode.h"
 #include "MayaNodes/CurveInstanceNode.h"
-#include "MayaNodes/BranchNode.h"
 
 #include "Utils.h"
 
@@ -49,8 +48,7 @@ static constexpr std::tuple<char const*, MTypeId*, MCreatorFunction, MInitialize
     { PhyllotaxisNode::nodeName(), &PhyllotaxisNode::s_id, PhyllotaxisNode::creator, PhyllotaxisNode::initialize },
     { ControlPlaneNode::nodeName(), &ControlPlaneNode::id, ControlPlaneNode::creator, ControlPlaneNode::initialize },
     { BSplineSurfaceNode::nodeName(), &BSplineSurfaceNode::id, BSplineSurfaceNode::creator, BSplineSurfaceNode::initialize},
-    { CurveInstanceNode::nodeName(), &CurveInstanceNode::id, CurveInstanceNode::creator, CurveInstanceNode::initialize},
-    { BranchNode::nodeName(), &BranchNode::s_id, BranchNode::creator, BranchNode::initialize  }
+    { CurveInstanceNode::nodeName(), &CurveInstanceNode::id, CurveInstanceNode::creator, CurveInstanceNode::initialize}
 };
 
 MStatus initializePlugin( MObject obj )

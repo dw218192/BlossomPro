@@ -1,7 +1,9 @@
 #pragma once
 
 #include "include/ui_BranchEditor.h"
-#include "MayaNodes/BranchNode.h"
+
+#include "Utils.h"
+#include "Grammar/GeneralizedCylinderGrammar.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class BranchEditor; }
@@ -15,11 +17,22 @@ public:
     ~BranchEditor() override;
 
 private:
-    struct BranchNodeNetwork {
-        MObject branchNodeObj;
-        MObject loftNodeObj;
+    struct Inputs {
+        GeneralizedCylinderGrammar::Functions funcs;
+        int numIter;
+        double step;
+        double length;
     };
-    Result<BranchNodeNetwork> createNetwork(MObject const& carrierCurve, MObject const& generatingCurve);
+
+    struct BranchNodeNetwork {
+        MObject generatingCurve;
+        MObject generatingCurveShape;
+
+        MObject loftNodeObj, tessNodeObj, transformObj, meshObj;
+    };
+
+    Inputs getInputs() const;
+    MStatus createNetwork(MSelectionList const& selection);
     MStatus updateNetwork(BranchNodeNetwork const& network);
 
 private slots:

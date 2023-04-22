@@ -13,6 +13,7 @@
 #include <format>
 
 #include "ExpressionParser.h"
+#include "NodeCmdUtils.h"
 
 static MStatus createPhyllotaxisNodeInstance(MObject& phyllotaxisNode, MString const& curveName) {
     using pn = PhyllotaxisNode;
@@ -46,19 +47,21 @@ MStatus PhyllotaxisEditor::updatePhyllotaxisNode() {
 
     MStatus status;
 
+    using namespace NodeCmdUtils;
+
     status = updateAttr(m_phyllotaxisNodeInstance,
-        pn::longName(pn::s_curveFunc),
-        MString{ m_func->serialize().c_str() });
+                        pn::longName(pn::s_curveFunc),
+                        MString{ m_func->serialize().c_str() });
     CHECK(status, status);
 
     status = updateAttr(m_phyllotaxisNodeInstance,
-        pn::longName(pn::s_numIter),
-        m_ui.numIterSpinBpx->value());
+                        pn::longName(pn::s_numIter),
+                        m_ui.numIterSpinBpx->value());
     CHECK(status, status);
 
     status = updateAttr(m_phyllotaxisNodeInstance,
-        pn::longName(pn::s_step),
-        m_ui.integStepDoubleBox->value());
+                        pn::longName(pn::s_step),
+                        m_ui.integStepDoubleBox->value());
     CHECK(status, status);
 
     return MStatus::kSuccess;

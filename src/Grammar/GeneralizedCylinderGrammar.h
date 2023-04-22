@@ -12,21 +12,26 @@ struct GeneralizedCylinderGrammar : public Grammar {
 		std::shared_ptr<UserCurveLenFunction> twistRate;
 	};
 
-	GeneralizedCylinderGrammar(std::unique_ptr<CurveInfo> info, Functions functions, double step = 0.02)
-		: m_step{step}, m_s{0.0}, m_phi{0.0}, m_info{std::move(info)}, m_funcs{functions}
-	{
-		m_turtle.pitchUp(90); // start facing +y axis
-	}
+	GeneralizedCylinderGrammar(Functions functions, double length = 1, double step = 0.02)
+		: m_step{step}, m_length{length}, m_s{0.0}, m_phi{0.0}, m_funcs{functions} { }
 
 	bool hasNext() const override {
-		return m_s < m_info->length();
+		return m_s < m_length;
 	}
 	void nextIter() override {
 		if (!hasNext()) {
 			return;
 		}
 
-		double const s = m_s / m_info->length();
+		m_turtle.pitchUp(90).forward(m_step).pitchDown(90);
+
+		// m_turtle.forward(m_step);
+
+		m_s += m_step;
+		m_result.emplace_back(m_turtle.getPos(), m_turtle.getRot(), MVector{ 1,1,1 });
+
+		/*
+		double const s = m_s / m_length;
 
 		auto const& yawFunc = *m_funcs.yawRate;
 		auto const& pitchFunc = *m_funcs.pitchRate;
@@ -49,11 +54,11 @@ struct GeneralizedCylinderGrammar : public Grammar {
 			.rollLeft(m_phi);
 
 		m_s += m_step;
+		*/
 	}
 
 private:
-	double const m_step;
+	double const m_step, m_length;
 	double m_s, m_phi;
-	std::unique_ptr<CurveInfo> m_info;
 	Functions const m_funcs;
 };

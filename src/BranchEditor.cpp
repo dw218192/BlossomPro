@@ -1,66 +1,85 @@
 #include "BranchEditor.h"
+#include "Utils.h"
+#include "NodeCmdUtils.h"
 
+#include <maya/MObject.h>
 #include <maya/MDagPath.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnTransform.h>
 #include <maya/MPointArray.h>
 #include <maya/MSelectionList.h>
+#include <maya/MFnSet.h>
 
-#include "Utils.h"
-#include "MayaNodes/BranchNode.h"
+#include <array>
 
+using namespace NodeCmdUtils;
 
-Result<BranchEditor::BranchNodeNetwork> BranchEditor::createNetwork(MObject const& carrierCurve, MObject const& generatingCurve) {
-    using bn = BranchNode;
+BranchEditor::Inputs BranchEditor::getInputs() const {
+    Inputs ret;
+    ret.funcs.yawRate = m_ui.keyframeCurveEditor->getFunction();
+    ret.funcs.pitchRate = m_ui.keyframeCurveEditor_2->getFunction();
+    ret.funcs.rollRate = m_ui.keyframeCurveEditor_3->getFunction();
+    ret.funcs.twistRate = m_ui.keyframeCurveEditor_4->getFunction();
+    ret.funcs.widthRate = m_ui.keyframeCurveEditor_5->getFunction();
+    ret.numIter = m_ui.numIterSpinBpx->value();
+    ret.step = m_ui.integStepDoubleBox->value();
+    ret.length = m_ui.lengthDoubleBox->value();
 
+    return ret;
+}
+
+MStatus BranchEditor::createNetwork(MSelectionList const& selection) {
     MStatus status = MStatus::kSuccess;
-    MObject branchNode = MFnDependencyNode{}.create(bn::s_id, &status);
-    CHECK(status, status);
 
-    MObject const loftNode = MFnDependencyNode{}.create("loft", &status);
-    CHECK(status, status);
+    status = selection.getDependNode(0, m_network.generatingCurve);
+    CHECK_RET(status);
 
-    MObject const tessNode = MFnDependencyNode{}.create("nurbsTessellate", &status);
-    CHECK(status, status);
+    auto const shapeObj = getShape(m_network.generatingCurve);
+    CHECK_RES(shapeObj);
 
-    MObject const transformNode = MFnTransform{}.create(MObject::kNullObj, &status);
-    CHECK(status, status);
+    m_network.generatingCurveShape = shapeObj.value();
 
-    MObject const meshNode = MFnMesh{}.create(0, 0, MPointArray{}, MIntArray{}, MIntArray{}, transformNode, &status);
-    CHECK(status, status);
-
-    auto const res = getName(generatingCurve);
-    if(!res.valid()) {
-        status = res.error();
-        CHECK(status, status);
+    if (m_network.loftNodeObj.isNull()) {
+        m_network.loftNodeObj = MFnDependencyNode{}.create("loft", &status);
+        CHECK_RET(status);
     }
 
-    updateAttr(branchNode, bn::longName(bn::s_generatingCurveName), res.value());
-    connectAttr(loftNode, "outputSurface", tessNode, "inputSurface");
-    connectAttr(tessNode, "outputPolygon", meshNode, "inMesh");
+    updateAttr(m_network.loftNodeObj, "reverseSurfaceNormals", true);
 
-/*
-    std::string const melCmdTemplate = loadResource("MEL/createBranchNode.mel");
-    std::string const melCmd = std::vformat(melCmdTemplate, std::make_format_args(
-	                                            carrierName.asChar(),
-	                                            generatingName.asChar(),
-	                                            fnBranchNode.name().asChar(),
-	                                            bn::longName(bn::s_carrierCurve),
-	                                            bn::longName(bn::s_generatingCurve),
-												bn::longName(bn::s_generatingCurveName),
-												bn::longName(bn::s_output)
-                                            ));
-    MString const mstrCmd{ melCmd.c_str() };
-    MGlobal::displayInfo(mstrCmd);
-    status = MGlobal::executeCommand(mstrCmd);
-    CHECK(status, status);
-*/
-    BranchNodeNetwork ret;
-    ret.branchNodeObj = branchNode;
-    ret.loftNodeObj = loftNode;
+    if (m_network.tessNodeObj.isNull()) {
+        m_network.tessNodeObj = MFnDependencyNode{}.create("nurbsTessellate", &status);
+        CHECK_RET(status);
+    }
+    if (m_network.transformObj.isNull()) {
+        m_network.transformObj = MFnTransform{}.create(MObject::kNullObj, &status);
+        CHECK_RET(status);
+    }
 
-    updateNetwork(ret);
-    return ret;
+    if (m_network.meshObj.isNull()) {
+        m_network.meshObj = MFnMesh{}.create(0, 0, MPointArray{}, MIntArray{}, MIntArray{}, m_network.transformObj, &status);
+        CHECK_RET(status);
+    }
+
+    connectAttr(m_network.loftNodeObj, "outputSurface", m_network.tessNodeObj, "inputSurface");
+    connectAttr(m_network.tessNodeObj, "outputPolygon", m_network.meshObj, "inMesh");
+
+    // Add mesh to the initial shading group
+    MSelectionList shadingGroupList;
+    shadingGroupList.add("initialShadingGroup");
+
+    MObject shadingGroupNode;
+    shadingGroupList.getDependNode(0, shadingGroupNode);
+
+    MFnSet shadingGroupSet{ shadingGroupNode, &status };
+    CHECK_RET(status);
+
+    status = shadingGroupSet.addMember(m_network.meshObj);
+    CHECK_RET(status);
+
+    status = updateNetwork(m_network);
+    CHECK_RET(status);
+
+    return status;
 }
 
 BranchEditor::BranchEditor(QWidget* parent) : QDialog{ parent } {
@@ -72,62 +91,101 @@ BranchEditor::~BranchEditor() {
 }
 
 MStatus BranchEditor::updateNetwork(BranchNodeNetwork const& network) {
-    using bn = BranchNode;
-
-    if(network.branchNodeObj.isNull()) {
+    if(network.loftNodeObj.isNull()) {
         return MStatus::kSuccess;
     }
 
     MStatus status;
-    for (auto [attr, curveEditor] : {
-	         std::pair{&(bn::s_funcs[0]), m_ui.keyframeCurveEditor},
-	         std::pair{&(bn::s_funcs[1]), m_ui.keyframeCurveEditor_2},
-	         std::pair{&(bn::s_funcs[2]), m_ui.keyframeCurveEditor_3},
-	         std::pair{&(bn::s_funcs[3]), m_ui.keyframeCurveEditor_4},
-	         std::pair{&(bn::s_funcs[4]), m_ui.keyframeCurveEditor_5},
-         }) {
-	    status = updateAttr(network.branchNodeObj,
-	                        bn::longName(*attr),
-	                        MString{curveEditor->getFunction()->serialize().c_str()});
-	    CHECK(status, status);
+	auto [funcs, numIter, step, length] = getInputs();
+
+    auto const grammar = std::make_unique<GeneralizedCylinderGrammar>(funcs, length, step);
+    HANDLE_EXCEPTION(grammar->process(numIter));
+
+    MPlug const inputCurvePlug = MFnDependencyNode{ network.loftNodeObj }
+		.findPlug("inputCurve", false, &status);
+    CHECK_RET(status);
+
+    // clear inputCurve Plug
+    MDGModifier dgModifier;
+
+    unsigned int const numConnectedElements = inputCurvePlug.numConnectedElements(&status);
+    CHECK_RET(status);
+    for (unsigned int i = 0; i < numConnectedElements; ++i) {
+        MPlug connectedPlug = inputCurvePlug.connectionByPhysicalIndex(i, &status);
+        CHECK_RET(status);
+        status = dgModifier.disconnect(connectedPlug, inputCurvePlug.elementByLogicalIndex(i));
+        CHECK_RET(status);
     }
 
-    status = updateAttr(network.branchNodeObj,
-        bn::longName(bn::s_numIter),
-        m_ui.numIterSpinBpx->value());
-    CHECK(status, status);
+	dgModifier.doIt();
 
-    status = updateAttr(network.branchNodeObj,
-        bn::longName(bn::s_step),
-        m_ui.integStepDoubleBox->value());
-    CHECK(status, status);
+    auto addCurve = [&inputCurvePlug, &dgModifier](unsigned int index, MObject curveShapeObj) {
+        MStatus status = MStatus::kSuccess;
+        MPlug const plug = inputCurvePlug.elementByLogicalIndex(index, &status);
+        CHECK_RET(status);
 
-    connectAttr(network.branchNodeObj, bn::longName(bn::s_output), network.loftNodeObj, "inputCurve");
+        MPlug const worldSpaceArrayPlug = MFnDependencyNode{ curveShapeObj }
+    		.findPlug("worldSpace", false, &status);
+        CHECK_RET(status);
+
+        MPlug const worldSpacePlug = worldSpaceArrayPlug.elementByLogicalIndex(0, &status);
+        CHECK_RET(status);
+
+        status = dgModifier.connect(worldSpacePlug, plug);
+        CHECK_RET(status);
+
+        return status;
+    };
+
+    unsigned int idx = 0;
+    status = addCurve(idx++, network.generatingCurveShape);
+    CHECK_RET(status);
+
+    for (auto const& [pos, rot, scale] : grammar->result()) {
+        // NOTE: this creates a transform node with a shape node all at once
+    	MObject curveObj = MFnNurbsCurve{}.copy(m_network.generatingCurveShape,MObject::kNullObj, &status);
+        CHECK_RET(status);
+
+        // Transform the duplicated curve to [pos, rot, scale]
+        MFnTransform transformFn{ curveObj };
+        status = transformFn.setTranslation(pos, MSpace::kTransform);
+        CHECK_RET(status);
+
+        status = transformFn.setRotation(rot);
+        CHECK_RET(status);
+
+        double const scales[3] = { scale.x, scale.y, scale.z };
+        status = transformFn.setScale(scales);
+        CHECK_RET(status);
+
+        auto curveShape = getShape(curveObj);
+        if(!curveShape.valid()) {
+            status = curveShape.error();
+            CHECK_RET(status);
+        }
+
+        //MFnDagNode dagNodeFn(curveObj, &status);
+        //MObject const curveShapeObj = dagNodeFn.child(0, &status);
+        //CHECK(status, status);
+
+        status = addCurve(idx++, curveShape.value());
+        CHECK_RET(status);
+    }
+    dgModifier.doIt();
 
     return MStatus::kSuccess;
 }
 void BranchEditor::on_createBtn_clicked() {
     MSelectionList selection;
     MStatus status = MGlobal::getActiveSelectionList(selection);
-    CHECK(status, (void)0);
+    CHECK_NO_RET(status);
 
-	if (selection.length() == 2) {
-        std::array<MObject, 2> curves;
-
-        status = selection.getDependNode(0, curves[0]);
-        CHECK(status, (void)0);
-
-        status = selection.getDependNode(1, curves[1]);
-        CHECK(status, (void)0);
-
-        auto const res = createNetwork(curves[0], curves[1]);
-        if(!res.valid()) {
-            CHECK(res.error(), (void)0);
-        }
-        m_network = res.value();
+	if (selection.length() == 1) {
+        status = createNetwork(selection);
+        CHECK_NO_RET(status);
     }
     else {
-        MGlobal::displayError("Please Select exactly two NURBS curves, carrier curve followed by generating curve");
+        MGlobal::displayError("Please Select exactly one NURBS curve to represent the cross-section of the limb");
     }
 }
 
@@ -138,30 +196,30 @@ void BranchEditor::on_numIterSpinBpx_valueChanged([[maybe_unused]] int value) {
 
 void BranchEditor::on_integStepDoubleBox_valueChanged([[maybe_unused]] double value) {
     MStatus const status = updateNetwork(m_network);
-    CHECK(status, (void)(0));
+    CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_keyframeCurveEditor_curveChanged() {
     MStatus const status = updateNetwork(m_network);
-    CHECK(status, (void)(0));
+    CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_keyframeCurveEditor_2_curveChanged() {
     MStatus const status = updateNetwork(m_network);
-    CHECK(status, (void)(0));
+    CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_keyframeCurveEditor_3_curveChanged() {
     MStatus const status = updateNetwork(m_network);
-    CHECK(status, (void)(0));
+    CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_keyframeCurveEditor_4_curveChanged() {
     MStatus const status = updateNetwork(m_network);
-    CHECK(status, (void)(0));
+    CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_keyframeCurveEditor_5_curveChanged() {
     MStatus const status = updateNetwork(m_network);
-    CHECK(status, (void)(0));
+    CHECK_NO_RET(status);
 }

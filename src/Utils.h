@@ -1,10 +1,6 @@
 #pragma once
 #include <maya/MStatus.h>
 #include <maya/MString.h>
-#include <maya/MPlug.h>
-#include <maya/MObject.h>
-#include <maya/MFnDependencyNode.h>
-#include <maya/MDGModifier.h>
 #include <maya/MGlobal.h>
 
 #include <exception>
@@ -25,6 +21,11 @@ catch (std::exception const& stdex) {\
 #define MAYA_EXCEPTION(status) MayaErrorException { status, __FILE__, __LINE__ }
 #define ERROR_MESSAGE(str) do { MGlobal::displayError(str); MGlobal::displayError(MString{"at line "} + __LINE__ + MString{" of "} + __FILE__); } while(false)
 #define CHECK(status, ret) do { if(MFAIL(status)) { ERROR_MESSAGE((status).errorString()); return (ret); } } while(false)
+#define CHECK_RET(status) CHECK(status, status)
+#define CHECK_NO_RET(status) CHECK(status, (void)0)
+#define CHECK_RES(res) do { if(!(res).valid()) { CHECK_RET((res).error()); } } while(false)
+#define CHECK_RES_NO_RET(res) do { if(!(res).valid()) CHECK_NO_RET((res).error()); } while(false)
+
 #define STR(val) #val
 
 struct MayaErrorException : public std::exception {
@@ -69,58 +70,3 @@ private:
 
 std::string loadResource(char const* path);
 void loadAndExecuteMelScript(char const* scriptFileName);
-
-template<typename T>
-MStatus updateAttr(MObject const& node, char const* attrName, T&& value) {
-    MStatus status = MStatus::kSuccess;
-    MFnDependencyNode const fnNode{ node };
-
-    MPlug plug = fnNode.findPlug(attrName, false, &status);
-    CHECK(status, status);
-    {
-        std::decay_t<T> test;
-        status = plug.getValue(test);
-        CHECK(status, status);
-
-        if (test != value) {
-            status = plug.setValue(std::forward<T>(value));
-            CHECK(status, status);
-        }
-    }
-    return status;
-}
-
-inline MStatus connectAttr(MObject const& from, char const* fromAttr, MObject const& to, char const* toAttr) {
-    MStatus status = MStatus::kSuccess;
-    MDGModifier dgModifier;
-    MFnDependencyNode const fnFrom{ from }, fnTo{ to };
-    MPlug const fromPlug = fnFrom.findPlug(fromAttr, false, &status);
-    CHECK(status, status);
-
-    MPlug const toPlug = fnTo.findPlug(toAttr, false, &status);
-    CHECK(status, status);
-
-    if(fromPlug.isArray() && toPlug.isArray()) {
-        unsigned int const numElements = fromPlug.numElements();
-        for (unsigned int i = 0; i < numElements; ++i) {
-            MPlug fromElement = fromPlug.elementByLogicalIndex(i, &status);
-            MPlug toElement = toPlug.elementByLogicalIndex(i, &status);
-            dgModifier.connect(fromElement, toElement);
-        }
-    } else {
-        dgModifier.connect(fromPlug, toPlug);
-    }
-
-    dgModifier.doIt();
-
-    return status;
-}
-
-inline Result<MString> getName(MObject const& obj) {
-    MStatus status = MStatus::kSuccess;
-    MFnDependencyNode const fnBranchNode{ obj, &status };
-    CHECK(status, status);
-    MString ret = fnBranchNode.name(&status);
-    CHECK(status, status);
-    return ret;
-}

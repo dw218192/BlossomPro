@@ -122,7 +122,31 @@
     <widget class="QWidget" name="widget" native="true">
      <layout class="QGridLayout" name="gridLayout_7">
       <item row="0" column="0">
-       <layout class="QVBoxLayout" name="verticalLayout_2">
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>step size</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="integStepDoubleBox">
+            <property name="minimum">
+             <double>0.010000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.200000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
@@ -140,26 +164,26 @@
             <property name="maximum">
              <number>1000</number>
             </property>
+            <property name="value">
+             <number>10</number>
+            </property>
            </widget>
           </item>
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
           <item>
-           <widget class="QLabel" name="label_2">
+           <widget class="QLabel" name="label_3">
             <property name="text">
-             <string>integration step</string>
+             <string>branch length</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QDoubleSpinBox" name="integStepDoubleBox">
-            <property name="minimum">
-             <double>0.010000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10.000000000000000</double>
+           <widget class="QDoubleSpinBox" name="lengthDoubleBox">
+            <property name="value">
+             <double>2.000000000000000</double>
             </property>
            </widget>
           </item>

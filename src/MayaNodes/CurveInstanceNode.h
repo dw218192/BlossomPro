@@ -28,6 +28,8 @@ public:
 	static MObject inputCenter;
 	static MObject inputRotate;
 	
+	static MObject rotateAttenuation;
+
 	static MObject inputCurve;
 
 	static MObject outTransforms;

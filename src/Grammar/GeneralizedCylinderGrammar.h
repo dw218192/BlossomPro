@@ -23,38 +23,37 @@ struct GeneralizedCylinderGrammar : public Grammar {
 			return;
 		}
 
-		m_turtle.pitchUp(90).forward(m_step).pitchDown(90);
-
-		// m_turtle.forward(m_step);
-
-		m_s += m_step;
-		m_result.emplace_back(m_turtle.getPos(), m_turtle.getRot(), MVector{ 1,1,1 });
-
-		/*
 		double const s = m_s / m_length;
 
-		auto const& yawFunc = *m_funcs.yawRate;
-		auto const& pitchFunc = *m_funcs.pitchRate;
-		auto const& rollFunc = *m_funcs.rollRate;
-		auto const& twistFunc = *m_funcs.twistRate;
-		auto const& widthFunc = *m_funcs.widthRate;
-		m_phi += twistFunc(s);
+#define EVAL(pfunc, dflt) (m_funcs.pfunc ? (*m_funcs.pfunc)(s) : (dflt))
+		auto const yawAngle = EVAL(yawRate, 0) * m_step;
+		auto const pitchAngle = EVAL(pitchRate, 0) * m_step;
+		auto const rollAngle = EVAL(rollRate, 0) * m_step;
+		auto const twistAngle = EVAL(twistRate, 0) * m_step;
+		auto const width = EVAL(widthRate, 1) * m_step;
+#undef EVAL
+
+		m_phi += twistAngle;
+
+		// roll --> rotate
+		// rotate --> roll
 
 		m_turtle
-			.rotateLeft(yawFunc(s) * m_step)
-			.pitchDown(pitchFunc(s) * m_step)
-			.rollRight(rollFunc(s) * m_step)
-			.rollRight(m_phi);
+			.rollLeft(yawAngle * m_step)
+			.pitchDown(pitchAngle * m_step)
+			.rotateRight(rollAngle * m_step)
+			.rotateRight(m_phi);
 
-		double const scale = widthFunc(s);
+		double const scale = width;
 		m_result.emplace_back(m_turtle.getPos(), m_turtle.getRot(), MVector { scale, scale, scale });
 
 		m_turtle
+			.pitchUp(90)
 			.forward(m_step)
-			.rollLeft(m_phi);
+			.pitchDown(90)
+			.rotateLeft(m_phi);
 
 		m_s += m_step;
-		*/
 	}
 
 private:

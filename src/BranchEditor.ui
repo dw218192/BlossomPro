@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>714</width>
+    <width>627</width>
     <height>630</height>
    </rect>
   </property>
@@ -17,15 +17,15 @@
    <item row="1" column="1">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
        <string>Yaw Rate</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="0">
-        <widget class="KeyframeCurveEditor" name="keyframeCurveEditor">
+       <item row="1" column="0">
+        <widget class="KeyframeCurveEditor" name="keyframeCurveEditor_1">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -46,6 +46,13 @@
          </property>
         </widget>
        </item>
+       <item row="0" column="0">
+        <widget class="QRadioButton" name="radioButton_1">
+         <property name="text">
+          <string>use this function</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="tab_2">
@@ -53,13 +60,20 @@
        <string>Pitch Rate</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="0">
+       <item row="1" column="0">
         <widget class="KeyframeCurveEditor" name="keyframeCurveEditor_2">
          <property name="maximumSize">
           <size>
            <width>16777215</width>
            <height>16777215</height>
           </size>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QRadioButton" name="radioButton_2">
+         <property name="text">
+          <string>use this function</string>
          </property>
         </widget>
        </item>
@@ -70,13 +84,20 @@
        <string>Roll Rate</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_4">
-       <item row="0" column="0">
+       <item row="1" column="0">
         <widget class="KeyframeCurveEditor" name="keyframeCurveEditor_3">
          <property name="maximumSize">
           <size>
            <width>16777215</width>
            <height>16777215</height>
           </size>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QRadioButton" name="radioButton_3">
+         <property name="text">
+          <string>use this function</string>
          </property>
         </widget>
        </item>
@@ -87,13 +108,20 @@
        <string>Twist Rate</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_5">
-       <item row="0" column="0">
+       <item row="1" column="0">
         <widget class="KeyframeCurveEditor" name="keyframeCurveEditor_4">
          <property name="maximumSize">
           <size>
            <width>16777215</width>
            <height>16777215</height>
           </size>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QRadioButton" name="radioButton_4">
+         <property name="text">
+          <string>use this function</string>
          </property>
         </widget>
        </item>
@@ -104,13 +132,20 @@
        <string>Width Rate</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_6">
-       <item row="0" column="0">
+       <item row="1" column="0">
         <widget class="KeyframeCurveEditor" name="keyframeCurveEditor_5">
          <property name="maximumSize">
           <size>
            <width>16777215</width>
            <height>16777215</height>
           </size>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QRadioButton" name="radioButton_5">
+         <property name="text">
+          <string>use this function</string>
          </property>
         </widget>
        </item>

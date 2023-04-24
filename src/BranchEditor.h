@@ -1,6 +1,7 @@
 #pragma once
 
 #include <maya/MObjectArray.h>
+#include <bitset>
 
 #include "include/ui_BranchEditor.h"
 

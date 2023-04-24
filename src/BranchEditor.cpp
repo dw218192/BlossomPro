@@ -175,7 +175,8 @@ MStatus BranchEditor::updateNetwork(BranchNodeNetwork const& network) {
     }
 
     MStatus status;
-	auto [funcs, numIter, step, length] = getInputs();
+	auto [funcs, numIter, step, length]
+		= getInputs();
 
     auto const grammar = std::make_unique<GeneralizedCylinderGrammar>(funcs, length, step);
     HANDLE_EXCEPTION(grammar->process(numIter));

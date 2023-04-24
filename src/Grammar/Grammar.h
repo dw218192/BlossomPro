@@ -57,10 +57,7 @@ struct Grammar {
 
 	Grammar() = default;
 	virtual ~Grammar() = default;
-	Grammar(Grammar&) = delete;
-	Grammar(Grammar&&) = delete;
-	Grammar& operator=(Grammar&) = delete;
-	Grammar& operator=(Grammar&&) = delete;
+
 
 	/// <summary>
 	/// evaluates the next iteration of the grammar
@@ -68,10 +65,18 @@ struct Grammar {
 	/// <summary>
 	/// returns if there is a next iteration
 	virtual bool hasNext() const = 0;
+	
 	/// <summary>
 	/// evaluate for a given number of iterations
 	void process(int numIter) {
 		for (int i = 0; i < numIter && hasNext(); ++i) {
+			nextIter();
+		}
+	}
+	/// <summary>
+	/// evaluate for a given number of iterations
+	void process() {
+		for (int i = 0; hasNext(); ++i) {
 			nextIter();
 		}
 	}
@@ -80,6 +85,5 @@ struct Grammar {
 	}
 protected:
 	std::vector<GrammarResult> m_result;
-
 	Turtle m_turtle;
 };

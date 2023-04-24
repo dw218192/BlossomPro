@@ -16,8 +16,6 @@ struct UserCurveLenFunction
 	static std::shared_ptr<UserCurveLenFunction> deserialize(char const* raw);
 
 	UserCurveLenFunction() = default;
-	UserCurveLenFunction(UserCurveLenFunction&) = delete;
-	UserCurveLenFunction(UserCurveLenFunction&&) = delete;
 	virtual ~UserCurveLenFunction() = default;
 
 	/**

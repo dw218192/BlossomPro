@@ -5,8 +5,7 @@
 #include <maya/MVector.h>
 
 struct CurveInfo {
-	CurveInfo() = delete;
-	CurveInfo(CurveInfo&) = delete;
+	// disable move because we have maya type fields
 	CurveInfo(CurveInfo&&) = delete;
 	CurveInfo(MObject const& curveObj, MStatus* status) : m_curve(curveObj, status) { }
 

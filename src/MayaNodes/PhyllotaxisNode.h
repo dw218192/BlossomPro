@@ -52,10 +52,8 @@ public:
 
 	PhyllotaxisNode() = default;
 	~PhyllotaxisNode() override = default;
-	Result<MObject> createBranchNodeInstance(MString const& carrierName, MString const& generatingName);
 	MStatus compute(const MPlug& plug, MDataBlock& data) override;
 
 private:
 	std::shared_ptr<UserCurveLenFunction> m_curveFunc;
-	std::unique_ptr<PhyllotaxisGrammar> m_grammar;
 };

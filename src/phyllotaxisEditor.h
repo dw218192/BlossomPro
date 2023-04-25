@@ -42,5 +42,4 @@ private:
     MObject m_phyllotaxisNodeInstance;
 
 	std::shared_ptr<UserCurveLenFunction> m_func;
-    std::unique_ptr<PhyllotaxisGrammar> m_grammar;
 };

@@ -7,9 +7,10 @@
 struct CurveInfo {
 	// disable move because we have maya type fields
 	CurveInfo(CurveInfo&&) = delete;
-	CurveInfo(MObject const& curveObj, MStatus* status) : m_curve(curveObj, status) { }
+	CurveInfo(CurveInfo const& other) : m_obj{ other.m_obj }, m_curve{ other.m_obj } {  }
+	CurveInfo(MObject const& curveObj, MStatus* status = nullptr) : m_obj{ curveObj }, m_curve{ curveObj, status } { }
 
-	auto getPoint(double s) const -> MVector  {
+	[[nodiscard]] auto getPoint(double s) const -> MVector  {
 		MStatus status;
 		double const param = m_curve.findParamFromLength(s, kMFnNurbsEpsilon, &status);
 		if (MFAIL(status)) {
@@ -22,14 +23,15 @@ struct CurveInfo {
 		}
 		return MVector { point };
 	}
-	auto length() const -> double {
+	[[nodiscard]] auto length() const -> double {
 		MStatus status;
-		double ret = m_curve.length(kMFnNurbsEpsilon, &status);
+		double const ret = m_curve.length(kMFnNurbsEpsilon, &status);
 		if (MFAIL(status)) {
 			throw MAYA_EXCEPTION(status);
 		}
 		return ret;
 	}
 private:
+	MObject m_obj;
 	MFnNurbsCurve m_curve;
 };

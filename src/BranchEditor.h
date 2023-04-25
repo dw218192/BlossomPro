@@ -22,7 +22,6 @@ public:
 private:
     struct Inputs {
         GeneralizedCylinderGrammar::Functions funcs;
-        int numIter;
         double step;
         double length;
     };
@@ -34,16 +33,24 @@ private:
         MObject loftNodeObj, tessNodeObj, transformObj, meshObj;
     };
 
+    enum UpdateCurveFlag {
+	    CURVE_1 = 1 << 0,
+    	CURVE_2 = 1 << 1,
+        CURVE_3 = 1 << 2,
+        CURVE_4 = 1 << 3,
+        CURVE_5 = 1 << 4
+    };
+
     MStatus pushLoftCurve(MObject const& curveObj);
     MStatus popLoftCurve();
-    Inputs getInputs() const;
+    Inputs getInputs(unsigned char flags) const;
     MStatus createNetwork(MSelectionList const& selection);
-    MStatus updateNetwork(BranchNodeNetwork const& network);
+    MStatus updateNetwork(BranchNodeNetwork const& network, unsigned char flags);
 
 private slots:
     void on_createBtn_clicked();
-    void on_numIterSpinBpx_valueChanged(int value);
-    void on_integStepDoubleBox_valueChanged(double value);
+    void on_numStepsSpinBox_valueChanged(int value);
+    void on_lengthDoubleBox_valueChanged(double value);
     void on_keyframeCurveEditor_1_curveChanged();
     void on_keyframeCurveEditor_2_curveChanged();
     void on_keyframeCurveEditor_3_curveChanged();
@@ -54,7 +61,9 @@ private slots:
     void on_radioButton_3_toggled(bool checked);
     void on_radioButton_4_toggled(bool checked);
     void on_radioButton_5_toggled(bool checked);
+
 private:
+    GeneralizedCylinderGrammar::Functions m_cachedFuncs;
 	MObjectArray m_curvePool;
     BranchNodeNetwork m_network;
     Ui::BranchEditor m_ui{};

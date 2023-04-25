@@ -13,7 +13,7 @@ struct GeneralizedCylinderGrammar : public Grammar {
 	};
 
 	GeneralizedCylinderGrammar(Functions functions, double length = 1, double step = 0.02)
-		: m_step{step}, m_length{length}, m_s{0.0}, m_phi{0.0}, m_funcs{functions} { }
+		: m_step{step}, m_length{length}, m_s{0.0}, m_phi{0.0}, m_funcs{std::move(functions)} { }
 
 	bool hasNext() const override {
 		return m_s < m_length;
@@ -30,7 +30,7 @@ struct GeneralizedCylinderGrammar : public Grammar {
 		auto const pitchAngle = EVAL(pitchRate, 0) * m_step;
 		auto const rollAngle = EVAL(rollRate, 0) * m_step;
 		auto const twistAngle = EVAL(twistRate, 0) * m_step;
-		auto const width = EVAL(widthRate, 1) * m_step;
+		auto const width = EVAL(widthRate, 1);
 #undef EVAL
 
 		m_phi += twistAngle;

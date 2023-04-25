@@ -72,6 +72,9 @@ MStatus BranchEditor::popLoftCurve() {
     status = dgModifier.disconnect(worldSpacePlug, inputCurvePlug.elementByLogicalIndex(idx));
     CHECK_RET(status);
 
+    status = dgModifier.doIt();
+    CHECK_RET(status);
+
     // remove from pool
     status = m_curvePool.remove(idx);
     CHECK_RET(status);
@@ -83,22 +86,34 @@ MStatus BranchEditor::popLoftCurve() {
     status = MGlobal::executeCommand(MString{ "delete " } + curveName.value());
     CHECK_RET(status);
 
-    status = dgModifier.doIt();
-    CHECK_RET(status);
-
     return status;
 }
 
-BranchEditor::Inputs BranchEditor::getInputs() const {
+BranchEditor::Inputs BranchEditor::getInputs(unsigned char flags) const {
     Inputs ret;
-    ret.funcs.yawRate = m_ui.radioButton_1->isChecked() ? m_ui.keyframeCurveEditor_1->getFunction() : nullptr;
-    ret.funcs.pitchRate = m_ui.radioButton_2->isChecked() ? m_ui.keyframeCurveEditor_2->getFunction() : nullptr;
-    ret.funcs.rollRate = m_ui.radioButton_3->isChecked() ? m_ui.keyframeCurveEditor_3->getFunction() : nullptr;
-    ret.funcs.twistRate = m_ui.radioButton_4->isChecked() ? m_ui.keyframeCurveEditor_4->getFunction() : nullptr;
-    ret.funcs.widthRate = m_ui.radioButton_5->isChecked() ? m_ui.keyframeCurveEditor_5->getFunction() : nullptr;
-    ret.numIter = m_ui.numIterSpinBpx->value();
-    ret.step = m_ui.integStepDoubleBox->value();
+
+	ret.funcs = m_cachedFuncs;
+
+    if (flags & CURVE_1) {
+        ret.funcs.yawRate = m_ui.radioButton_1->isChecked() ? m_ui.keyframeCurveEditor_1->getFunction() : nullptr;
+    }
+	if (flags & CURVE_2) {
+	    ret.funcs.pitchRate = m_ui.radioButton_2->isChecked() ? m_ui.keyframeCurveEditor_2->getFunction() : nullptr;
+    }
+    if (flags & CURVE_3) {
+	    ret.funcs.rollRate = m_ui.radioButton_3->isChecked() ? m_ui.keyframeCurveEditor_3->getFunction() : nullptr;
+    }
+    if (flags & CURVE_4) {
+	    ret.funcs.twistRate = m_ui.radioButton_4->isChecked() ? m_ui.keyframeCurveEditor_4->getFunction() : nullptr;
+    }
+    if (flags & CURVE_5) {
+	    ret.funcs.widthRate = m_ui.radioButton_5->isChecked() ? m_ui.keyframeCurveEditor_5->getFunction() : nullptr;
+    }
+
     ret.length = m_ui.lengthDoubleBox->value();
+    ret.step = ret.length / m_ui.numStepsSpinBox->value();
+
+    const_cast<BranchEditor*>(this)->m_cachedFuncs = ret.funcs;
 
     return ret;
 }
@@ -155,7 +170,7 @@ MStatus BranchEditor::createNetwork(MSelectionList const& selection) {
     status = shadingGroupSet.addMember(m_network.meshObj);
     CHECK_RET(status);
 
-    status = updateNetwork(m_network);
+    status = updateNetwork(m_network, CURVE_1 | CURVE_2 | CURVE_3 | CURVE_4 | CURVE_5);
     CHECK_RET(status);
 
     return status;
@@ -169,17 +184,16 @@ BranchEditor::~BranchEditor() {
 	
 }
 
-MStatus BranchEditor::updateNetwork(BranchNodeNetwork const& network) {
+MStatus BranchEditor::updateNetwork(BranchNodeNetwork const& network, unsigned char flags) {
     if(network.loftNodeObj.isNull()) {
         return MStatus::kSuccess;
     }
 
     MStatus status;
-	auto [funcs, numIter, step, length]
-		= getInputs();
+	auto [funcs, step, length] = getInputs(flags);
 
-    auto const grammar = std::make_unique<GeneralizedCylinderGrammar>(funcs, length, step);
-    HANDLE_EXCEPTION(grammar->process(numIter));
+    GeneralizedCylinderGrammar grammar{ funcs, length, step };
+    HANDLE_EXCEPTION(grammar.process());
 
     // validate curve pool
     {
@@ -192,7 +206,7 @@ MStatus BranchEditor::updateNetwork(BranchNodeNetwork const& network) {
     }
 
     // connect any new curve's shape to the loft node
-    unsigned int const numCurves = grammar->result().size();
+    unsigned int const numCurves = grammar.result().size();
     if(numCurves < m_curvePool.length()) {
         auto const diff = m_curvePool.length() - numCurves;
         for (unsigned int i = 0; i < diff;  ++i) {
@@ -212,7 +226,7 @@ MStatus BranchEditor::updateNetwork(BranchNodeNetwork const& network) {
 
     // start at the second curve because the first curve stays in place
     unsigned int idx = 0;
-    for (auto const& [pos, rot, scale] : grammar->result()) {
+    for (auto const& [pos, rot, scale] : grammar.result()) {
         // NOTE: this creates a transform node with a shape node all at once
     	MObject curveObj = m_curvePool[idx++];
 
@@ -244,72 +258,71 @@ void BranchEditor::on_createBtn_clicked() {
     }
 }
 
-void BranchEditor::on_numIterSpinBpx_valueChanged([[maybe_unused]] int value) {
-	MStatus const status = updateNetwork(m_network);
+void BranchEditor::on_numStepsSpinBox_valueChanged([[maybe_unused]] int value) {
+	MStatus const status = updateNetwork(m_network, 0);
     CHECK_NO_RET(status);
 }
-
-void BranchEditor::on_integStepDoubleBox_valueChanged([[maybe_unused]] double value) {
-    MStatus const status = updateNetwork(m_network);
+void BranchEditor::on_lengthDoubleBox_valueChanged([[maybe_unused]] double value) {
+    MStatus const status = updateNetwork(m_network, 0);
     CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_keyframeCurveEditor_1_curveChanged() {
 	if (m_ui.radioButton_1->isChecked()) {
-		MStatus const status = updateNetwork(m_network);
+		MStatus const status = updateNetwork(m_network, CURVE_1);
 		CHECK_NO_RET(status);
 	}
 }
 
 void BranchEditor::on_keyframeCurveEditor_2_curveChanged() {
 	if (m_ui.radioButton_2->isChecked()) {
-		MStatus const status = updateNetwork(m_network);
+		MStatus const status = updateNetwork(m_network, CURVE_2);
 		CHECK_NO_RET(status);
 	}
 }
 
 void BranchEditor::on_keyframeCurveEditor_3_curveChanged() {
 	if (m_ui.radioButton_3->isChecked()) {
-		MStatus const status = updateNetwork(m_network);
+		MStatus const status = updateNetwork(m_network, CURVE_3);
 		CHECK_NO_RET(status);
 	}
 }
 
 void BranchEditor::on_keyframeCurveEditor_4_curveChanged() {
 	if (m_ui.radioButton_4->isChecked()) {
-		MStatus const status = updateNetwork(m_network);
+		MStatus const status = updateNetwork(m_network, CURVE_4);
 		CHECK_NO_RET(status);
 	}
 }
 
 void BranchEditor::on_keyframeCurveEditor_5_curveChanged() {
 	if (m_ui.radioButton_5->isChecked()) {
-		MStatus const status = updateNetwork(m_network);
+		MStatus const status = updateNetwork(m_network, CURVE_5);
 		CHECK_NO_RET(status);
 	}
 }
 
 void BranchEditor::on_radioButton_1_toggled([[maybe_unused]] bool checked) {
-    MStatus const status = updateNetwork(m_network);
+    MStatus const status = updateNetwork(m_network, CURVE_1);
     CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_radioButton_2_toggled([[maybe_unused]] bool checked) {
-    MStatus const status = updateNetwork(m_network);
+    MStatus const status = updateNetwork(m_network, CURVE_2);
     CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_radioButton_3_toggled([[maybe_unused]] bool checked) {
-    MStatus const status = updateNetwork(m_network);
+    MStatus const status = updateNetwork(m_network, CURVE_3);
     CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_radioButton_4_toggled([[maybe_unused]] bool checked) {
-    MStatus const status = updateNetwork(m_network);
+    MStatus const status = updateNetwork(m_network, CURVE_4);
     CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_radioButton_5_toggled([[maybe_unused]] bool checked) {
-    MStatus const status = updateNetwork(m_network);
+    MStatus const status = updateNetwork(m_network, CURVE_5);
     CHECK_NO_RET(status);
 }

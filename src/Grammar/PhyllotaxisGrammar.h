@@ -4,19 +4,12 @@
 #include "../CurveLenFunction/UserCurveLenFunction.h"
 
 struct PhyllotaxisGrammar : public Grammar {
-	PhyllotaxisGrammar()
-		: m_info(std::move(info)), m_densityFunc(func), m_integrationStep(integrationStep), m_a(0.0), m_s(0.0)
+	PhyllotaxisGrammar(CurveInfo const& info, std::shared_ptr<UserCurveLenFunction> func, double integrationStep = 0.0001)
+		: m_info{ info }, m_densityFunc(std::move(func)), m_integrationStep(integrationStep), m_a(0.0), m_s(0.0)
 	{
 		m_turtle.pitchUp(90); // start facing +y axis
 	}
 
-	void reset(CurveInfo info, std::shared_ptr<UserCurveLenFunction> func, double integrationStep = 0.0001) {
-		m_info = info;
-		m_densityFunc = func;
-		m_integrationStep = integrationStep;
-		m_a = 0.0;
-		m_s = 0.0;
-	}
 	bool hasNext() const override {
 		return m_s < m_info.length();
 	}

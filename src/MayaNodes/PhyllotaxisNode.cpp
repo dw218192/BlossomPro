@@ -104,11 +104,9 @@ MStatus PhyllotaxisNode::compute(const MPlug& plug, MDataBlock& data) {
 	double const step = data.inputValue(s_step, &status).asDouble();
 	CHECK(status, status);
 
-	auto curveInfo = std::make_unique<CurveInfo>(curveObj, &status);
+	PhyllotaxisGrammar grammar{ { curveObj, &status }, m_curveFunc, step };
 	CHECK(status, status);
-
-	m_grammar = std::make_unique<PhyllotaxisGrammar>(std::move(curveInfo), m_curveFunc, step);
-	HANDLE_EXCEPTION(m_grammar->process(numIter));
+	HANDLE_EXCEPTION(grammar.process(numIter));
 
 	MFnArrayAttrsData arrayAttrsData;
 	MObject aadObj = arrayAttrsData.create(&status);
@@ -120,7 +118,7 @@ MStatus PhyllotaxisNode::compute(const MPlug& plug, MDataBlock& data) {
 	MVectorArray scales = arrayAttrsData.vectorArray("scale", &status);
 	CHECK(status, status);
 
-	for (auto&& [pos, rot, scale] : m_grammar->result()) {
+	for (auto&& [pos, rot, scale] : grammar.result()) {
 		status = positions.append(pos);
 		CHECK(status, status);
 

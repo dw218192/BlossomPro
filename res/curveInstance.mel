@@ -8,3 +8,7 @@ connectAttr ($CurveInstanceNode + ".otrans") ($Instancer + ".inputPoints");
 setAttr ($CurveInstanceNode + ".icount") {};
 connectAttr {}.r ($CurveInstanceNode + ".ir");
 connectAttr {}.matrix ($Instancer + ".inputHierarchy[0]");
+
+$Group = `group -em -n patelGroup`;
+parent ($CenterSphere[0]) ($Group);
+parent ($Instancer) ($Group);

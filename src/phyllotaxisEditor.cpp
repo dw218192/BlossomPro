@@ -15,65 +15,101 @@
 #include "ExpressionParser.h"
 #include "NodeCmdUtils.h"
 
-static MStatus createPhyllotaxisNodeInstance(MObject& phyllotaxisNode, MString const& curveName) {
-    /*
-	 *             creates the following node graph
-	 *           
-	 *           |-------------------(sphere shape)----> instancer --- (instances)--> [phyllotaxis pattern]
-	 *  ----- (inputs)----> phyllotaxis node ---(attr array)---|
-	 *           |                 |
-	 *           |                 |----(radius)------> makeNurbsCircle ---(circle)----> curveInstanceNode --(attr array)------> instancer ---> [petals]
-     *           -------------------------------------------------------------------------------------------(patal shape)---------|
-	 */                   
-
-	using pn = PhyllotaxisNode;
-    using namespace NodeCmdUtils;
-
-    MStatus status;
-    phyllotaxisNode = MFnDependencyNode{}.create(pn::s_id, &status);
-    CHECK_RET(status);
-
-    MFnDependencyNode fnPhyllotaxisNode{ phyllotaxisNode, &status };
-    CHECK_RET(status);
-
-    MObject instancer = MFnDependencyNode{}.create("instancer", &status);
-    CHECK_RET(status);
-
-
-    // connect instancer
-    /*
-    std::string melCmdTemplate = loadResource("MEL/createPhyllotaxis.mel");
-    std::string melCmd = std::vformat(melCmdTemplate, std::make_format_args(
-        curveName.asChar(),
-        fnPhyllotaxisNode.name().asChar(),
-        pn::longName(pn::s_curve),
-        fnPhyllotaxisNode.name().asChar(),
-        pn::longName(pn::s_output)
-    ));  
-    MGlobal::displayInfo(melCmd.c_str());
-    status = MGlobal::executeCommand(melCmd.c_str());
-    CHECK(status, status);
-    */
-
-    return MStatus::kSuccess;
-}
-
 MStatus PhyllotaxisEditor::updatePhyllotaxisNode() {
     using pn = PhyllotaxisNode;
     using namespace NodeCmdUtils;
 
-    MStatus status = Attribute{m_phyllotaxisNodeInstance, pn::longName(pn::s_curveFunc)}
+    if(m_network.phyllotaxisNode.isNull()) {
+        return MStatus::kSuccess;
+    }
+
+    MStatus status = Attribute{m_network.phyllotaxisNode, pn::longName(pn::s_curveFunc)}
 	    .setValue(MString { m_func->serialize().c_str() });
     CHECK(status, status);
 
-	status = Attribute{ m_phyllotaxisNodeInstance, pn::longName(pn::s_numIter) }
+	status = Attribute{ m_network.phyllotaxisNode, pn::longName(pn::s_numIter) }
 		.setValue(m_ui.numIterSpinBpx->value());
     CHECK(status, status);
 
-    status = Attribute{ m_phyllotaxisNodeInstance, pn::longName(pn::s_step) }
+    status = Attribute{ m_network.phyllotaxisNode, pn::longName(pn::s_step) }
 		.setValue(m_ui.integStepDoubleBox->value());
     CHECK(status, status);
 
+    return MStatus::kSuccess;
+}
+
+MStatus PhyllotaxisEditor::createNetwork(MSelectionList const& selection) {
+    /*
+	 *             creates the following node graph
+	 *
+	 *           |-------------------(sphere shape)----> instancer --- (instances)--> [phyllotaxis pattern]
+	 *  ----- (inputs)----> phyllotaxis node ---(attr array)---|
+	 *           |                 |
+	 *           |                 |----(radius)------> makeNurbsCircle ---(circle)----> curveInstanceNode --(attr array)------> instancer ---> [petals]
+	 *           -------------------------------------------------------------------------------------------(patal shape)---------|
+	 */
+
+    using pn = PhyllotaxisNode;
+    using namespace NodeCmdUtils;
+
+    Network network = m_network;
+    MStatus status;
+
+    status = selection.getDependNode(0, network.curveShape);
+    CHECK_RET(status);
+    auto const shapeObj = getShape(network.curveShape);
+    CHECK_RES(shapeObj);
+
+    network.curveShape = shapeObj.value();
+
+    if (network.phyllotaxisNode.isNull()) {
+        network.phyllotaxisNode = MFnDependencyNode{}.create(pn::s_id, &status);
+        CHECK_RET(status);
+    }
+    if (network.instancer.isNull()) {
+        network.instancer = MFnDependencyNode{}.create("instancer", &status);
+        CHECK_RET(status);
+    }
+
+    if (network.meshShape.isNull() || network.meshTransform.isNull()) {
+        if (network.polySphereNode.isNull()) {
+            network.polySphereNode = MFnDependencyNode{}.create("polySphere", &status);
+            CHECK_RET(status);
+        }
+
+        auto const meshRes = createEmptyMesh();
+        CHECK_RES(meshRes);
+
+        auto const& mesh = meshRes.value();
+        network.meshShape = mesh.shape;
+        network.meshTransform = mesh.transform;
+
+        status = addDefaultShadingGroup(network.meshTransform);
+        CHECK_RET(status);
+    }
+
+    Attribute const polySphereOutput{ network.polySphereNode, "output" };
+    Attribute const meshInput{ network.meshShape, "inMesh" };
+    Attribute const meshMatrix{ network.meshTransform, "matrix" };
+    Attribute const instancerHierarchyInput{ network.instancer, "inputHierarchy" };
+    Attribute const instancerInputPoints{ network.instancer, "inputPoints" };
+    Attribute const phyllotaxisOutputPoints{ network.phyllotaxisNode, pn::longName(pn::s_output) };
+    Attribute const phyllotaxisCurveInput{ network.phyllotaxisNode, pn::longName(pn::s_curve) };
+    Attribute const curveWorldspace{ network.curveShape, "worldSpace"};
+
+    status = curveWorldspace[0].connect(phyllotaxisCurveInput);
+    CHECK_RET(status);
+
+    status = polySphereOutput.connect(meshInput);
+    CHECK_RET(status);
+
+    status = meshMatrix.connect(instancerHierarchyInput[0]);
+    CHECK_RET(status);
+
+    status = phyllotaxisOutputPoints.connect(instancerInputPoints);
+    CHECK_RET(status);
+
+    m_network = network;
     return MStatus::kSuccess;
 }
 
@@ -105,9 +141,7 @@ void PhyllotaxisEditor::updateDensityFunc() {
         break;
     }
 
-    if (!m_phyllotaxisNodeInstance.isNull()) {
-        CHECK(updatePhyllotaxisNode(), (void)0);
-    }
+    CHECK_NO_RET(updatePhyllotaxisNode());
 }
 
 void PhyllotaxisEditor::on_expressionPlainTextEdit_textChanged() {
@@ -121,15 +155,11 @@ void PhyllotaxisEditor::on_mirrorCheckBox_stateChanged(int state) {
 }
 
 void PhyllotaxisEditor::on_numIterSpinBpx_valueChanged(int value) {
-    if (!m_phyllotaxisNodeInstance.isNull()) {
-        CHECK(updatePhyllotaxisNode(), (void)0);
-    }
+    CHECK_NO_RET(updatePhyllotaxisNode());
 }
 
 void PhyllotaxisEditor::on_integStepDoubleBox_valueChanged(double value) {
-    if (!m_phyllotaxisNodeInstance.isNull()) {
-        CHECK(updatePhyllotaxisNode(), (void)0);
-    }
+    CHECK_NO_RET(updatePhyllotaxisNode());
 }
 
 void PhyllotaxisEditor::on_tabWidget_currentChanged(int index) {
@@ -160,22 +190,22 @@ void PhyllotaxisEditor::on_createBtn_clicked() {
 
 	MSelectionList selection;
     MStatus status = MGlobal::getActiveSelectionList(selection);
-    CHECK(status, (void)0);
+    CHECK_NO_RET(status);
 
     if (selection.length() == 1) {
         MDagPath dagPath;
         status = selection.getDagPath(0, dagPath);
-        CHECK(status, (void)0);
+        CHECK_NO_RET(status);
 
         MFnDagNode const dagNode{ dagPath };
         MString const curveObjName = dagNode.name(&status);
-        CHECK(status, (void)0);
+        CHECK_NO_RET(status);
 
-        status = createPhyllotaxisNodeInstance(m_phyllotaxisNodeInstance, curveObjName);
-        CHECK(status, (void)0);
+        status = createNetwork(selection);
+        CHECK_NO_RET(status);
 
         status = updatePhyllotaxisNode();
-        CHECK(status, (void)0);
+        CHECK_NO_RET(status);
     } else {
         MGlobal::displayError("Please Select exactly one NURBS curve first");
     }

@@ -21,6 +21,7 @@ private:
     };
     void updateDensityFunc();
     MStatus updatePhyllotaxisNode();
+    MStatus createNetwork(MSelectionList const& selection);
 
 private slots: //void on_<object name>_<signal name>(<signal parameters>);
     void on_expressionPlainTextEdit_textChanged();
@@ -39,7 +40,16 @@ private:
     DensityFuncEditType m_densityFuncEditType;
 
     Ui::PhyllotaxisEditor m_ui;
-    MObject m_phyllotaxisNodeInstance;
+
+    struct Network {
+        MObject curveShape;
+        MObject phyllotaxisNode;
+        MObject polySphereNode;
+        MObject instancer;
+        MObject meshShape;
+        MObject meshTransform;
+    };
+    Network m_network;
 
 	std::shared_ptr<UserCurveLenFunction> m_func;
 };

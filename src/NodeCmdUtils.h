@@ -8,8 +8,10 @@
 #include <maya/MDGModifier.h>
 #include <maya/MFnSet.h>
 #include <maya/MSelectionList.h>
-
-#include <optional>
+#include <maya/MFnMesh.h>
+#include <maya/MFnTransform.h>
+#include <maya/MPointArray.h>
+#include <maya/MIntArray.h>
 
 namespace NodeCmdUtils {
     struct Attribute {
@@ -60,7 +62,14 @@ namespace NodeCmdUtils {
     inline auto Attribute::connect(Attribute const& other) const noexcept -> MStatus {
 	    MDGModifier dgModifier;
         MFnDependencyNode const fnFrom{ m_object }, fnTo{ other.m_object };
-        MStatus status = dgModifier.connect(m_plug, other.m_plug);
+        MStatus status;
+    	if(m_plug.isConnected(&status)) {
+            CHECK_RET(status);
+
+            status = dgModifier.disconnect(m_plug, other.m_plug);
+            CHECK_RET(status);
+    	}
+        status = dgModifier.connect(m_plug, other.m_plug);
         CHECK_RET(status);
 
         status = dgModifier.doIt();
@@ -72,8 +81,14 @@ namespace NodeCmdUtils {
     inline auto Attribute::disconnect(Attribute const& other) const noexcept -> MStatus {
         MDGModifier dgModifier;
         MFnDependencyNode const fnFrom{ m_object }, fnTo{ other.m_object };
-        MStatus status = dgModifier.disconnect(m_plug, other.m_plug);
-        CHECK_RET(status);
+        MStatus status;
+
+        if (m_plug.isConnected(&status)) {
+            CHECK_RET(status);
+
+            status = dgModifier.disconnect(m_plug, other.m_plug);
+            CHECK_RET(status);
+        }
 
         status = dgModifier.doIt();
         CHECK_RET(status);
@@ -112,7 +127,7 @@ namespace NodeCmdUtils {
         return status;
     }
 
-    inline Result<MString> getName(MObject const& obj) noexcept {
+    [[nodiscard]] inline Result<MString> getName(MObject const& obj) noexcept {
         MStatus status = MStatus::kSuccess;
         MFnDependencyNode const fnBranchNode{ obj, &status };
         CHECK(status, status);
@@ -121,7 +136,7 @@ namespace NodeCmdUtils {
         return ret;
     }
 
-    inline MStatus rename(MObject const& obj, MString const& newName) noexcept {
+    [[nodiscard]] inline MStatus rename(MObject const& obj, MString const& newName) noexcept {
         MStatus status = MStatus::kSuccess;
         MFnDependencyNode depNode{ obj, &status };
         CHECK(status, status);
@@ -132,7 +147,7 @@ namespace NodeCmdUtils {
         return status;
     }
 
-    inline MStatus addDefaultShadingGroup(MObject const& meshTransform) {
+    [[nodiscard]] inline MStatus addDefaultShadingGroup(MObject const& meshTransform) {
         MStatus status = MStatus::kSuccess;
         MSelectionList shadingGroupList;
         shadingGroupList.add("initialShadingGroup");
@@ -148,21 +163,37 @@ namespace NodeCmdUtils {
         return status;
     }
 
-    inline Result<MObject> getShape(MObject const& transformObj) noexcept {
+    [[nodiscard]] inline Result<MObject> getShape(MObject const& transformObj) noexcept {
         MStatus status = MStatus::kSuccess;
         MFnDagNode const dagNode{ transformObj, &status };
-        CHECK(status, status);
+        CHECK_RET(status);
 
         MDagPath dagPath;
         status = dagNode.getPath(dagPath);
-        CHECK(status, status);
+        CHECK_RET(status);
 
         status = dagPath.extendToShape();
-        CHECK(status, status);
+        CHECK_RET(status);
 
         MObject shapeObj = dagPath.node(&status);
-        CHECK(status, status);
+        CHECK_RET(status);
 
         return shapeObj;
+    }
+
+    struct MeshCreateResult {
+        MObject shape;
+        MObject transform;
+    };
+    [[nodiscard]] inline Result<MeshCreateResult> createEmptyMesh() noexcept {
+        MStatus status;
+        MeshCreateResult ret;
+        ret.transform = MFnTransform{}.create(MObject::kNullObj, &status);
+        CHECK_RET(status);
+
+        ret.shape = MFnMesh{}.create(0, 0, MPointArray{}, MIntArray{}, MIntArray{}, ret.transform, &status);
+        CHECK_RET(status);
+
+        return ret;
     }
 };

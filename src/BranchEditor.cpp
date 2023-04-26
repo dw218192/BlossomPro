@@ -16,32 +16,19 @@ using namespace NodeCmdUtils;
 
 MStatus BranchEditor::pushLoftCurve(MObject const& curveObj) {
     MStatus status = MStatus::kSuccess;
-    MDGModifier dgModifier;
-
-    MPlug const inputCurvePlug = MFnDependencyNode{ m_network.loftNodeObj }
-		.findPlug("inputCurve", false, &status);
-    CHECK_RET(status);
 
     auto const idx = m_curvePool.length();
     auto const shapeObj = getShape(curveObj);
     CHECK_RES(shapeObj);
 
     // connect: curveShape.worldSpace[0] --> loftNode.inputCurve[i]
-    MPlug const worldSpaceArrayPlug = MFnDependencyNode{ shapeObj.value() }
-		.findPlug("worldSpace", false, &status);
-    CHECK_RET(status);
-
-    MPlug const worldSpacePlug = worldSpaceArrayPlug.elementByLogicalIndex(0, &status);
-    CHECK_RET(status);
-
-    status = dgModifier.connect(worldSpacePlug, inputCurvePlug.elementByLogicalIndex(idx));
+    Attribute const loftInputCurve{ m_network.loftNodeObj, "inputCurve" };
+    Attribute const curveWorldSpaceTransform{ shapeObj.value(), "worldSpace" };
+    status = curveWorldSpaceTransform[0].connect(loftInputCurve[idx]);
     CHECK_RET(status);
 
     // append to pool
     status = m_curvePool.append(curveObj);
-    CHECK_RET(status);
-
-    status = dgModifier.doIt();
     CHECK_RET(status);
 
     return status;
@@ -49,12 +36,6 @@ MStatus BranchEditor::pushLoftCurve(MObject const& curveObj) {
 
 MStatus BranchEditor::popLoftCurve() {
     MStatus status = MStatus::kSuccess;
-    MDGModifier dgModifier;
-
-    MPlug const inputCurvePlug = MFnDependencyNode{ m_network.loftNodeObj }
-		.findPlug("inputCurve", false, &status);
-    CHECK_RET(status);
-
     auto const idx = m_curvePool.length() - 1;
     MObject const curveObj = m_curvePool[idx];
 
@@ -62,17 +43,9 @@ MStatus BranchEditor::popLoftCurve() {
     CHECK_RES(shapeObj);
 
     // disconnect: curveShape.worldSpace[0] --> loftNode.inputCurve[i]
-    MPlug const worldSpaceArrayPlug = MFnDependencyNode{ shapeObj.value() }
-		.findPlug("worldSpace", false, &status);
-    CHECK_RET(status);
-
-    MPlug const worldSpacePlug = worldSpaceArrayPlug.elementByLogicalIndex(0, &status);
-    CHECK_RET(status);
-
-    status = dgModifier.disconnect(worldSpacePlug, inputCurvePlug.elementByLogicalIndex(idx));
-    CHECK_RET(status);
-
-    status = dgModifier.doIt();
+    Attribute const loftInputCurve{ m_network.loftNodeObj, "inputCurve" };
+    Attribute const curveWorldSpaceTransform{ shapeObj.value(), "worldSpace" };
+    status = curveWorldSpaceTransform[0].disconnect(loftInputCurve[idx]);
     CHECK_RET(status);
 
     // remove from pool
@@ -119,6 +92,13 @@ BranchEditor::Inputs BranchEditor::getInputs(unsigned char flags) const {
 }
 
 MStatus BranchEditor::createNetwork(MSelectionList const& selection) {
+    /*
+     *   creates the following node graph
+     *
+     *   --(inputs)--> loft --(surface)--> tessellation --(mesh)-->
+     *
+     */
+
     MStatus status = MStatus::kSuccess;
 
     // get the generating curve's transform and shape
@@ -138,7 +118,8 @@ MStatus BranchEditor::createNetwork(MSelectionList const& selection) {
     status = pushLoftCurve(m_network.generatingCurve);
     CHECK_RET(status);
 
-    updateAttr(m_network.loftNodeObj, "reverseSurfaceNormals", true);
+    status = Attribute{ m_network.loftNodeObj, "reverseSurfaceNormals" }.setValue(true);
+    CHECK_RET(status);
 
     if (m_network.tessNodeObj.isNull()) {
         m_network.tessNodeObj = MFnDependencyNode{}.create("nurbsTessellate", &status);
@@ -154,22 +135,22 @@ MStatus BranchEditor::createNetwork(MSelectionList const& selection) {
         CHECK_RET(status);
     }
 
-    connectAttr(m_network.loftNodeObj, "outputSurface", m_network.tessNodeObj, "inputSurface");
-    connectAttr(m_network.tessNodeObj, "outputPolygon", m_network.meshObj, "inMesh");
+    Attribute loftOutput { m_network.loftNodeObj, "outputSurface" };
+    Attribute const tessInput { m_network.tessNodeObj, "inputSurface" };
+    Attribute tessOutput{ m_network.tessNodeObj, "outputPolygon" };
+    Attribute const meshInput{ m_network.meshObj, "inMesh" };
+
+    status = loftOutput.connect(tessInput);
+    CHECK_RET(status);
+
+    status = tessOutput.connect(meshInput);
+    CHECK_RET(status);
 
     // Add mesh to the initial shading group
-    MSelectionList shadingGroupList;
-    shadingGroupList.add("initialShadingGroup");
-
-    MObject shadingGroupNode;
-    shadingGroupList.getDependNode(0, shadingGroupNode);
-
-    MFnSet shadingGroupSet{ shadingGroupNode, &status };
+    status = addDefaultShadingGroup(m_network.meshObj);
     CHECK_RET(status);
 
-    status = shadingGroupSet.addMember(m_network.meshObj);
-    CHECK_RET(status);
-
+    // populate the input attributes of the loft node
     status = updateNetwork(m_network, CURVE_1 | CURVE_2 | CURVE_3 | CURVE_4 | CURVE_5);
     CHECK_RET(status);
 

@@ -61,6 +61,15 @@ MStatus PhyllotaxisNode::initialize() {
 	);
 	CHECK(status, status);
 
+	s_curveRadiusOutput = typedAttribute.create(
+		longName(s_curveRadiusOutput),
+		shortName(s_curveRadiusOutput),
+		MFnData::kNurbsCurve,
+		MObject::kNullObj,
+		&status
+	);
+	CHECK(status, status);
+
 	status = addAttribute(s_curve);
 	CHECK(status, status);
 	status = addAttribute(s_curveFunc);
@@ -70,6 +79,8 @@ MStatus PhyllotaxisNode::initialize() {
 	status = addAttribute(s_step);
 	CHECK(status, status);
 	status = addAttribute(s_output);
+	CHECK(status, status);
+	status = addAttribute(s_curveRadiusOutput);
 	CHECK(status, status);
 
 	status = attributeAffects(s_curve, s_output);
@@ -81,13 +92,22 @@ MStatus PhyllotaxisNode::initialize() {
 	status = attributeAffects(s_step, s_output);
 	CHECK(status, status);
 
+	status = attributeAffects(s_curve, s_curveRadiusOutput);
+	CHECK(status, status);
+	status = attributeAffects(s_curveFunc, s_curveRadiusOutput);
+	CHECK(status, status);
+	status = attributeAffects(s_numIter, s_curveRadiusOutput);
+	CHECK(status, status);
+	status = attributeAffects(s_step, s_curveRadiusOutput);
+	CHECK(status, status);
+
 	return MStatus::kSuccess;
 }
 
 MStatus PhyllotaxisNode::compute(const MPlug& plug, MDataBlock& data) {
 	MStatus status;
 
-	if (plug != s_output) {
+	if (plug != s_output && plug != s_curveRadiusOutput) {
 		return MStatus::kUnknownParameter;
 	}
 
@@ -104,35 +124,47 @@ MStatus PhyllotaxisNode::compute(const MPlug& plug, MDataBlock& data) {
 	double const step = data.inputValue(s_step, &status).asDouble();
 	CHECK(status, status);
 
-	PhyllotaxisGrammar grammar{ { curveObj, &status }, m_curveFunc, step };
-	CHECK(status, status);
-	HANDLE_EXCEPTION(grammar.process(numIter));
+	CurveInfo const info{ curveObj, &status };
 
-	MFnArrayAttrsData arrayAttrsData;
-	MObject aadObj = arrayAttrsData.create(&status);
-	CHECK(status, status);
+	if (plug == s_curveRadiusOutput) {
+		MVector const basePoint = info.getPoint(0);
 
-	MVectorArray positions = arrayAttrsData.vectorArray("position", &status);
-	CHECK(status, status);
-
-	MVectorArray scales = arrayAttrsData.vectorArray("scale", &status);
-	CHECK(status, status);
-
-	for (auto&& [pos, rot, scale] : grammar.result()) {
-		status = positions.append(pos);
+		MDataHandle handle = data.outputValue(s_output, &status);
 		CHECK(status, status);
 
-		status = scales.append(scale);
+		handle.setDouble(basePoint.length());
+		CHECK(status, status);
+	} else {
+		PhyllotaxisGrammar grammar{ info , m_curveFunc, step };
+		CHECK(status, status);
+		HANDLE_EXCEPTION(grammar.process(numIter));
+
+		MFnArrayAttrsData arrayAttrsData;
+		MObject aadObj = arrayAttrsData.create(&status);
+		CHECK(status, status);
+
+		MVectorArray positions = arrayAttrsData.vectorArray("position", &status);
+		CHECK(status, status);
+
+		MVectorArray scales = arrayAttrsData.vectorArray("scale", &status);
+		CHECK(status, status);
+
+		for (auto&& [pos, rot, scale] : grammar.result()) {
+			status = positions.append(pos);
+			CHECK(status, status);
+
+			status = scales.append(scale);
+			CHECK(status, status);
+		}
+
+		MGlobal::displayInfo(MString{ "num of instances = " } + positions.length());
+
+		MDataHandle handle = data.outputValue(s_output, &status);
+		CHECK(status, status);
+
+		status = handle.setMObject(aadObj);
 		CHECK(status, status);
 	}
-
-	MGlobal::displayInfo(MString{ "num of instances = " } + positions.length());
-
-	MDataHandle handle = data.outputValue(s_output, &status);
-	CHECK(status, status);
-
-	status = handle.setMObject(aadObj);
-	CHECK(status, status);
 
 	status = data.setClean(plug);
 	CHECK(status, status);

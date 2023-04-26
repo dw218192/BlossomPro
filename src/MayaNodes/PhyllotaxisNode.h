@@ -14,7 +14,8 @@ public:
 	static inline UserCurveLenFuncAttribute s_curveFunc;
 	static inline MObject s_numIter;
 	static inline MObject s_step;
-	static inline MObject s_output;
+	static inline MObject s_output;      // output array of transforms for instancer
+	static inline MObject s_curveRadiusOutput; // output curve for petals (this will be passed to makeNurbsCurve node)
 
 	static constexpr char const* nodeName() {
 		return "PhyllotaxisNode";
@@ -30,6 +31,8 @@ public:
 			return "step";
 		} else if(&attr == &s_output) {
 			return "outArr";
+		} else if(&attr == &s_curveRadiusOutput) {
+			return "outCurveRadius";
 		}
 		return "";
 	}
@@ -44,6 +47,8 @@ public:
 			return "st";
 		} else if (&attr == &s_output) {
 			return "oa";
+		} else if (&attr == &s_curveRadiusOutput) {
+			return "ocr";
 		}
 		return "";
 	}

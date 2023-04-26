@@ -6,90 +6,109 @@
 #include <maya/MObject.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MDGModifier.h>
+#include <maya/MFnSet.h>
+#include <maya/MSelectionList.h>
+
+#include <optional>
 
 namespace NodeCmdUtils {
-    template<typename T>
-    MStatus updateAttr(MObject const& node, char const* attrName, T&& value) noexcept {
-        MStatus status = MStatus::kSuccess;
-        MFnDependencyNode const fnNode{ node };
+    struct Attribute {
+        Attribute(MObject const& obj, char const* attrName) noexcept;
 
-        MPlug plug = fnNode.findPlug(attrName, false, &status);
-        CHECK(status, status);
-        {
-            std::decay_t<T> test;
-            status = plug.getValue(test);
-            CHECK(status, status);
+    	template<typename T>
+        [[nodiscard]] auto value() const noexcept -> Result<T>;
+        template<typename T>
+        [[nodiscard]] auto setValue(T&& val) noexcept -> MStatus;
+        [[nodiscard]] auto operator[](unsigned int i) const noexcept -> Attribute;
 
-            if (test != value) {
-                status = plug.setValue(std::forward<T>(value));
-                CHECK(status, status);
-            }
+        [[nodiscard]] auto connect(Attribute const& other) const noexcept -> MStatus;
+        [[nodiscard]] auto disconnect(Attribute const& other) const noexcept -> MStatus;
+    private:
+        Attribute() noexcept {}
+        bool m_valid;
+        MPlug m_plug;
+        MObject m_object;
+    };
+
+
+    inline Attribute::Attribute(MObject const& obj, char const* attrName) noexcept {
+        MStatus status;
+        MFnDependencyNode const fnNode{ obj };
+        m_plug = fnNode.findPlug(attrName, false, &status);
+        if(MFAIL(status)) {
+            m_valid = false;
+            return;
         }
+
+        m_object = obj;
+        m_valid = true;
+    }
+
+    inline auto Attribute::operator[](unsigned i) const noexcept -> Attribute {
+        Attribute ret;
+        MStatus status;
+        ret.m_plug = m_plug.elementByLogicalIndex(i, &status);
+        if (MFAIL(status)) {
+            ret.m_valid = false;
+            return ret;
+        }
+    	ret.m_object = m_object;
+        ret.m_valid = true;
+        return ret;
+    }
+
+    inline auto Attribute::connect(Attribute const& other) const noexcept -> MStatus {
+	    MDGModifier dgModifier;
+        MFnDependencyNode const fnFrom{ m_object }, fnTo{ other.m_object };
+        MStatus status = dgModifier.connect(m_plug, other.m_plug);
+        CHECK_RET(status);
+
+        status = dgModifier.doIt();
+        CHECK_RET(status);
+
         return status;
     }
-    template<typename T>
-    MStatus updateArrayAttr(MObject const& node, char const* attrName, unsigned int i, T&& value) noexcept {
-        MStatus status = MStatus::kSuccess;
-        MFnDependencyNode const fnNode{ node };
 
-        MPlug const plug = fnNode.findPlug(attrName, false, &status);
-        CHECK(status, status);
-        {
-            if (plug.isArray()) {
-                MPlug elementPlug = plug.elementByLogicalIndex(i, &status);
-                CHECK(status, status);
+    inline auto Attribute::disconnect(Attribute const& other) const noexcept -> MStatus {
+        MDGModifier dgModifier;
+        MFnDependencyNode const fnFrom{ m_object }, fnTo{ other.m_object };
+        MStatus status = dgModifier.disconnect(m_plug, other.m_plug);
+        CHECK_RET(status);
 
-                std::decay_t<T> test;
-                elementPlug.getValue(test);
+        status = dgModifier.doIt();
+        CHECK_RET(status);
 
-                if (test != value) {
-                    status = elementPlug.setValue(std::forward<T>(value));
-                    CHECK(status, status);
-                }
-            }
-        }
         return status;
     }
-    template<typename T>
-    Result<T> getAttrValue(MObject const& node, char const* attrName) noexcept {
-        MStatus status = MStatus::kSuccess;
 
-        MFnDependencyNode const fnNode{ node };
-
-        MPlug const plug = fnNode.findPlug(attrName, false, &status);
-        CHECK(status, status);
+    template <typename T>
+    auto Attribute::value() const noexcept -> Result<T> {
+        if (!m_valid) {
+            return MStatus::kInvalidParameter;
+        }
 
         std::decay_t<T> ret;
-        status = plug.getValue(ret);
-        CHECK(status, status);
+        MStatus status = m_plug.getValue(ret);
+        CHECK_RET(status);
 
         return ret;
     }
 
-    inline MStatus connectAttr(MObject const& from, char const* fromAttr, MObject const& to, char const* toAttr) noexcept {
-        MStatus status = MStatus::kSuccess;
-        MDGModifier dgModifier;
-        MFnDependencyNode const fnFrom{ from }, fnTo{ to };
-        MPlug const fromPlug = fnFrom.findPlug(fromAttr, false, &status);
-        CHECK(status, status);
-
-        MPlug const toPlug = fnTo.findPlug(toAttr, false, &status);
-        CHECK(status, status);
-
-        if (fromPlug.isArray() && toPlug.isArray()) {
-            unsigned int const numElements = fromPlug.numElements();
-            for (unsigned int i = 0; i < numElements; ++i) {
-                MPlug fromElement = fromPlug.elementByLogicalIndex(i, &status);
-                MPlug toElement = toPlug.elementByLogicalIndex(i, &status);
-                dgModifier.connect(fromElement, toElement);
-            }
-        }
-        else {
-            dgModifier.connect(fromPlug, toPlug);
+    template <typename T>
+    auto Attribute::setValue(T&& val) noexcept -> MStatus {
+        if(!m_valid) {
+            return MStatus::kInvalidParameter;
         }
 
-        dgModifier.doIt();
+        std::decay_t<T> test;
 
+    	MStatus status = m_plug.getValue(test);
+        CHECK_RET(status);
+
+        if (test != val) {
+            status = m_plug.setValue(std::forward<T>(val));
+            CHECK_RET(status);
+        }
         return status;
     }
 
@@ -110,6 +129,22 @@ namespace NodeCmdUtils {
         depNode.setName(newName, false, &status);
         CHECK(status, status);
 
+        return status;
+    }
+
+    inline MStatus addDefaultShadingGroup(MObject const& meshTransform) {
+        MStatus status = MStatus::kSuccess;
+        MSelectionList shadingGroupList;
+        shadingGroupList.add("initialShadingGroup");
+
+        MObject shadingGroupNode;
+        shadingGroupList.getDependNode(0, shadingGroupNode);
+
+        MFnSet shadingGroupSet{ shadingGroupNode, &status };
+        CHECK_RET(status);
+
+        status = shadingGroupSet.addMember(meshTransform);
+        CHECK_RET(status);
         return status;
     }
 

@@ -16,16 +16,32 @@
 #include "NodeCmdUtils.h"
 
 static MStatus createPhyllotaxisNodeInstance(MObject& phyllotaxisNode, MString const& curveName) {
-    using pn = PhyllotaxisNode;
+    /*
+	 *             creates the following node graph
+	 *           
+	 *           |-------------------(sphere shape)----> instancer --- (instances)--> [phyllotaxis pattern]
+	 *  ----- (inputs)----> phyllotaxis node ---(attr array)---|
+	 *           |                 |
+	 *           |                 |----(radius)------> makeNurbsCircle ---(circle)----> curveInstanceNode --(attr array)------> instancer ---> [petals]
+     *           -------------------------------------------------------------------------------------------(patal shape)---------|
+	 */                   
+
+	using pn = PhyllotaxisNode;
+    using namespace NodeCmdUtils;
 
     MStatus status;
     phyllotaxisNode = MFnDependencyNode{}.create(pn::s_id, &status);
-    CHECK(status, status);
+    CHECK_RET(status);
 
     MFnDependencyNode fnPhyllotaxisNode{ phyllotaxisNode, &status };
-    CHECK(status, status);
+    CHECK_RET(status);
+
+    MObject instancer = MFnDependencyNode{}.create("instancer", &status);
+    CHECK_RET(status);
+
 
     // connect instancer
+    /*
     std::string melCmdTemplate = loadResource("MEL/createPhyllotaxis.mel");
     std::string melCmd = std::vformat(melCmdTemplate, std::make_format_args(
         curveName.asChar(),
@@ -33,35 +49,29 @@ static MStatus createPhyllotaxisNodeInstance(MObject& phyllotaxisNode, MString c
         pn::longName(pn::s_curve),
         fnPhyllotaxisNode.name().asChar(),
         pn::longName(pn::s_output)
-    ));
-
+    ));  
     MGlobal::displayInfo(melCmd.c_str());
     status = MGlobal::executeCommand(melCmd.c_str());
     CHECK(status, status);
+    */
 
     return MStatus::kSuccess;
 }
 
 MStatus PhyllotaxisEditor::updatePhyllotaxisNode() {
     using pn = PhyllotaxisNode;
-
-    MStatus status;
-
     using namespace NodeCmdUtils;
 
-    status = updateAttr(m_phyllotaxisNodeInstance,
-                        pn::longName(pn::s_curveFunc),
-                        MString{ m_func->serialize().c_str() });
+    MStatus status = Attribute{m_phyllotaxisNodeInstance, pn::longName(pn::s_curveFunc)}
+	    .setValue(MString { m_func->serialize().c_str() });
     CHECK(status, status);
 
-    status = updateAttr(m_phyllotaxisNodeInstance,
-                        pn::longName(pn::s_numIter),
-                        m_ui.numIterSpinBpx->value());
+	status = Attribute{ m_phyllotaxisNodeInstance, pn::longName(pn::s_numIter) }
+		.setValue(m_ui.numIterSpinBpx->value());
     CHECK(status, status);
 
-    status = updateAttr(m_phyllotaxisNodeInstance,
-                        pn::longName(pn::s_step),
-                        m_ui.integStepDoubleBox->value());
+    status = Attribute{ m_phyllotaxisNodeInstance, pn::longName(pn::s_step) }
+		.setValue(m_ui.integStepDoubleBox->value());
     CHECK(status, status);
 
     return MStatus::kSuccess;

@@ -87,6 +87,12 @@ MStatus PhyllotaxisEditor::createNetwork() {
 
         network.petalInstancer = res.value();
         CHECK_RET(status);
+
+        MFnTransform transform{ network.phyInstancer, &status };
+        CHECK_RET(status);
+
+        status = transform.addChild(network.petalInstancer);
+        CHECK_RET(status);
     }
     if (network.meshShape.isNull() || network.meshTransform.isNull()) {
         if (network.polySphereNode.isNull()) {
@@ -122,6 +128,10 @@ MStatus PhyllotaxisEditor::createNetwork() {
         auto const& mesh = res.value();
         network.circleCurveShape = mesh.shape;
         network.circleCurveTransform = mesh.transform;
+
+        // hide the circle from the user
+        status = Attribute{ network.circleCurveTransform, "visibility"}.setValue(false);
+        CHECK_RET(status);
     }
 
     if(network.curveInstanceNode.isNull()) {
@@ -191,6 +201,10 @@ MStatus PhyllotaxisEditor::createNetwork() {
         status = curveInstanceNodeOutput.connect(petalInstancerInputPoints);
         CHECK_RET(status);
     }
+
+    // hide the sphere from the user
+    status = Attribute{ network.meshTransform, "visibility" }.setValue(false);
+    CHECK_RET(status);
 
     m_network = network;
     return status;

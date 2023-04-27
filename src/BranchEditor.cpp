@@ -98,7 +98,6 @@ MStatus BranchEditor::createNetwork(MSelectionList const& selection) {
      *   --(inputs)--> loft --(surface)--> tessellation --(mesh)-->
      *
      */
-
     MStatus status = MStatus::kSuccess;
 
     // get the generating curve's transform and shape

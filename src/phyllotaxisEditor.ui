@@ -76,7 +76,7 @@
        <item>
         <widget class="QSpinBox" name="numPetalsSpinBox">
          <property name="minimum">
-          <number>1</number>
+          <number>4</number>
          </property>
          <property name="value">
           <number>10</number>

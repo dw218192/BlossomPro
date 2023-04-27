@@ -20,7 +20,7 @@ private:
         EXPRESSION = 1
     };
     void updateDensityFunc();
-    MStatus updatePhyllotaxisNode();
+    MStatus updateNetwork();
     MStatus createNetwork();
 
 private slots: //void on_<object name>_<signal name>(<signal parameters>);

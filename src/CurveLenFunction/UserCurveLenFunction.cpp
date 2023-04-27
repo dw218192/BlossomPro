@@ -1,27 +1,43 @@
 #include "UserCurveLenFunction.h"
 #include "ExpressionCurveLenFunction.h"
 #include "KeyframeCurveLenFunction.h"
-
-#include "../Utils.h"
 #include <sstream>
 
-std::shared_ptr<UserCurveLenFunction> UserCurveLenFunction::deserialize(char const* raw) {
+Result<std::shared_ptr<UserCurveLenFunction>> UserCurveLenFunction::deserialize(char const* raw) noexcept {
 	std::string const str{ raw };
 	std::istringstream ss{ str };
-	ss.exceptions(std::ios::failbit);
 
 	std::string typeStr;
 	ss >> typeStr;
 
-	if(typeStr == STR(ExpressionCurveLenFunction)) {
-		auto ret = std::make_shared<ExpressionCurveLenFunction>("");
-		ret->deserialize(ss);
-		return ret;
-	} else if(typeStr == STR(KeyframeCurveLenFunction)) {
-		auto ret = std::make_shared<KeyframeCurveLenFunction>(ControlPointArray{}, KeyframeCurveLenFunction::SplineType::Linear, 1.0);
-		ret->deserialize(ss);
-		return ret;
-	} else {
-		throw std::runtime_error{ "unknown curve len function type " + typeStr };
+	try {
+		if (typeStr == STR(ExpressionCurveLenFunction)) {
+			struct Type : public ExpressionCurveLenFunction {};
+
+			auto ret = std::dynamic_pointer_cast<UserCurveLenFunction>(std::make_shared<Type>());
+			ret->deserialize(ss);
+			return ret;
+		}
+		else if (typeStr == STR(KeyframeCurveLenFunction)) {
+			struct Type : public KeyframeCurveLenFunction {};
+
+			auto ret = std::dynamic_pointer_cast<UserCurveLenFunction>(std::make_shared<Type>());
+			ret->deserialize(ss);
+			return ret;
+		}
+		else {
+			return MStatus{ MStatus::kInvalidParameter };
+		}
+	} catch (...) {
+		return MStatus{ MStatus::kInvalidParameter };
+	}
+}
+
+Result<MString> UserCurveLenFunction::serialize(UserCurveLenFunction const& func) noexcept {
+	try {
+		std::string const ret = func.serialize();
+		return MString{ ret.c_str() };
+	} catch (...) {
+		return MStatus{ MStatus::kInvalidParameter };
 	}
 }

@@ -7,6 +7,7 @@
 #include <maya/MFnArrayAttrsData.h>
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnNurbsCurve.h>
+#include <maya/MFnUnitAttribute.h>
 #include <maya/MVectorArray.h>
 
 void* PhyllotaxisNode::creator() {
@@ -17,6 +18,7 @@ MStatus PhyllotaxisNode::initialize() {
 	MStatus status;
 
 	MFnTypedAttribute typedAttribute;
+	MFnUnitAttribute unitAttribute;
 	MFnNumericAttribute numericAttribute;
 
 	s_curve = typedAttribute.create(
@@ -61,11 +63,11 @@ MStatus PhyllotaxisNode::initialize() {
 	);
 	CHECK(status, status);
 
-	s_curveRadiusOutput = typedAttribute.create(
+	s_curveRadiusOutput = numericAttribute.create(
 		longName(s_curveRadiusOutput),
 		shortName(s_curveRadiusOutput),
-		MFnData::kNurbsCurve,
-		MObject::kNullObj,
+		MFnNumericData::Type::kDouble,
+		0.0,
 		&status
 	);
 	CHECK(status, status);
@@ -96,10 +98,6 @@ MStatus PhyllotaxisNode::initialize() {
 	CHECK(status, status);
 	status = attributeAffects(s_curveFunc, s_curveRadiusOutput);
 	CHECK(status, status);
-	status = attributeAffects(s_numIter, s_curveRadiusOutput);
-	CHECK(status, status);
-	status = attributeAffects(s_step, s_curveRadiusOutput);
-	CHECK(status, status);
 
 	return MStatus::kSuccess;
 }
@@ -113,57 +111,57 @@ MStatus PhyllotaxisNode::compute(const MPlug& plug, MDataBlock& data) {
 
 	// validate input
 	MObject curveObj = data.inputValue(s_curve, &status).asNurbsCurveTransformed();
-	CHECK(status, status);
-
-	int const numIter = data.inputValue(s_numIter, &status).asInt();
-	CHECK(status, status);
-
-	HANDLE_EXCEPTION(s_curveFunc.inputValue(m_curveFunc, data, &status));
-	CHECK(status, status);
-
-	double const step = data.inputValue(s_step, &status).asDouble();
-	CHECK(status, status);
+	CHECK_RET(status);
 
 	CurveInfo const info{ curveObj, &status };
+	CHECK_RET(status);
 
 	if (plug == s_curveRadiusOutput) {
 		MVector const basePoint = info.getPoint(0);
 
-		MDataHandle handle = data.outputValue(s_output, &status);
-		CHECK(status, status);
+		MDataHandle handle = data.outputValue(s_curveRadiusOutput, &status);
+		CHECK_RET(status);
 
-		handle.setDouble(basePoint.length());
-		CHECK(status, status);
+		handle.setDouble(std::abs(basePoint.x));
+		CHECK_RET(status);
 	} else {
+		status = s_curveFunc.inputValue(m_curveFunc, data);
+		CHECK_RET(status);
+
+		int const numIter = data.inputValue(s_numIter, &status).asInt();
+		CHECK_RET(status);
+
+		double const step = data.inputValue(s_step, &status).asDouble();
+		CHECK_RET(status);
+
 		PhyllotaxisGrammar grammar{ info , m_curveFunc, step };
-		CHECK(status, status);
 		HANDLE_EXCEPTION(grammar.process(numIter));
 
 		MFnArrayAttrsData arrayAttrsData;
 		MObject aadObj = arrayAttrsData.create(&status);
-		CHECK(status, status);
+		CHECK_RET(status);
 
 		MVectorArray positions = arrayAttrsData.vectorArray("position", &status);
-		CHECK(status, status);
+		CHECK_RET(status);
 
 		MVectorArray scales = arrayAttrsData.vectorArray("scale", &status);
-		CHECK(status, status);
+		CHECK_RET(status);
 
 		for (auto&& [pos, rot, scale] : grammar.result()) {
 			status = positions.append(pos);
-			CHECK(status, status);
+			CHECK_RET(status);
 
 			status = scales.append(scale);
-			CHECK(status, status);
+			CHECK_RET(status);
 		}
 
 		MGlobal::displayInfo(MString{ "num of instances = " } + positions.length());
 
 		MDataHandle handle = data.outputValue(s_output, &status);
-		CHECK(status, status);
+		CHECK_RET(status);
 
 		status = handle.setMObject(aadObj);
-		CHECK(status, status);
+		CHECK_RET(status);
 	}
 
 	status = data.setClean(plug);

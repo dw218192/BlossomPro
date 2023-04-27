@@ -16,8 +16,11 @@ struct KeyframeCurveLenFunction : public UserCurveLenFunction {
 	double operator()(double s) const override;
 	bool operator==(UserCurveLenFunction const&) const override;
 	bool operator==(KeyframeCurveLenFunction const&) const;
+    bool operator!=(KeyframeCurveLenFunction const& other) const {
+        return !(*this == other);
+    }
+
 	bool valid() const override;
-	std::string serialize() const override;
     void setType(SplineType type);
     void setYScale(double scale) {
         m_yScale = scale;
@@ -34,6 +37,10 @@ struct KeyframeCurveLenFunction : public UserCurveLenFunction {
     ControlPointArray const& getControlPoints() const {
         return m_controlPoints;
     }
+
+protected:
+    KeyframeCurveLenFunction() = default;
+    std::string serialize() const override;
     void deserialize(std::istringstream&) override;
 
 private:

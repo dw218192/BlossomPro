@@ -12,6 +12,7 @@
 #include <maya/MFnTransform.h>
 #include <maya/MPointArray.h>
 #include <maya/MIntArray.h>
+#include <maya/MPlugArray.h>
 
 namespace NodeCmdUtils {
     struct Attribute {
@@ -22,8 +23,9 @@ namespace NodeCmdUtils {
         template<typename T>
         [[nodiscard]] auto setValue(T&& val) noexcept -> MStatus;
         [[nodiscard]] auto operator[](unsigned int i) const noexcept -> Attribute;
+        [[nodiscard]] auto child(unsigned int i) const noexcept -> Attribute;
 
-        [[nodiscard]] auto connect(Attribute const& other) const noexcept -> MStatus;
+        [[nodiscard]] auto connect(Attribute const& other, bool force = true) const noexcept -> MStatus;
         [[nodiscard]] auto disconnect(Attribute const& other) const noexcept -> MStatus;
     private:
         Attribute() noexcept {}
@@ -59,15 +61,32 @@ namespace NodeCmdUtils {
         return ret;
     }
 
-    inline auto Attribute::connect(Attribute const& other) const noexcept -> MStatus {
-	    MDGModifier dgModifier;
-        MFnDependencyNode const fnFrom{ m_object }, fnTo{ other.m_object };
+    inline auto Attribute::child(unsigned i) const noexcept -> Attribute {
+        Attribute ret;
         MStatus status;
-    	if(m_plug.isConnected(&status)) {
-            CHECK_RET(status);
-
-            status = dgModifier.disconnect(m_plug, other.m_plug);
-            CHECK_RET(status);
+    	ret.m_plug = m_plug.child(i, &status);
+        if (MFAIL(status)) {
+            ret.m_valid = false;
+            return ret;
+        }
+        ret.m_object = m_object;
+        ret.m_valid = true;
+        return ret;
+    }
+    // if force is on, then it will disconnect all existing connections before attempting to connect
+    inline auto Attribute::connect(Attribute const& other, bool force) const noexcept -> MStatus {
+	    MDGModifier dgModifier;
+        MStatus status;
+    	if(force) {
+            // disconnect other.m_plug from their existing connections
+            MPlugArray connectedPlugs;
+            if (other.m_plug.connectedTo(connectedPlugs, true, false, &status)) {
+                CHECK_RET(status);
+                for (auto const& connectedPlug : connectedPlugs) {
+                    status = dgModifier.disconnect(connectedPlug, other.m_plug);
+                    CHECK_RET(status);
+                }
+            }
     	}
         status = dgModifier.connect(m_plug, other.m_plug);
         CHECK_RET(status);
@@ -80,15 +99,8 @@ namespace NodeCmdUtils {
 
     inline auto Attribute::disconnect(Attribute const& other) const noexcept -> MStatus {
         MDGModifier dgModifier;
-        MFnDependencyNode const fnFrom{ m_object }, fnTo{ other.m_object };
-        MStatus status;
-
-        if (m_plug.isConnected(&status)) {
-            CHECK_RET(status);
-
-            status = dgModifier.disconnect(m_plug, other.m_plug);
-            CHECK_RET(status);
-        }
+        MStatus status = dgModifier.disconnect(m_plug, other.m_plug);
+        CHECK_RET(status);
 
         status = dgModifier.doIt();
         CHECK_RET(status);
@@ -116,7 +128,6 @@ namespace NodeCmdUtils {
         }
 
         std::decay_t<T> test;
-
     	MStatus status = m_plug.getValue(test);
         CHECK_RET(status);
 

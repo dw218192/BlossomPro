@@ -25,17 +25,21 @@ struct UserCurveLenFuncAttribute {
 	MObject* operator&() {
 		return &m_obj;
 	}
-	void inputValue(std::shared_ptr<UserCurveLenFunction>& outVal, MDataBlock& data, MStatus* status) const {
-		MString const serializedCurve = data.inputValue(m_obj, status).asString();
-		if(MFAIL(*status)) {
-			return;
+	MStatus inputValue(std::shared_ptr<UserCurveLenFunction>& inOutVal, MDataBlock& data) const noexcept {
+		MStatus status;
+		MString const serializedCurve = data.inputValue(m_obj, &status).asString();
+		CHECK_RET(status);
+
+		auto res = UserCurveLenFunction::deserialize(serializedCurve.asChar());
+		CHECK_RES(res);
+
+		if (!inOutVal || *res.value() != *inOutVal) {
+			inOutVal = res.value();
 		}
-		if (!outVal || outVal->serialize() != serializedCurve) {
-			outVal = UserCurveLenFunction::deserialize(serializedCurve.asChar());
+		if (!inOutVal || !inOutVal->valid()) {
+			return MStatus::kInvalidParameter;
 		}
-		if (!outVal || !outVal->valid()) {
-			*status = MStatus::kInvalidParameter;
-		}
+		return status;
 	}
 private:
 	MObject m_obj;

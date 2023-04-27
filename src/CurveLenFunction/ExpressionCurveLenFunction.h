@@ -17,10 +17,16 @@ public:
 	double operator()(double s) const override;
 	bool operator==(UserCurveLenFunction const& other) const override;
 	bool operator==(ExpressionCurveLenFunction const& other) const;
+	bool operator!=(ExpressionCurveLenFunction const& other) const {
+		return !(*this == other);
+	}
+
 	bool valid() const override {
 		return m_valid;
 	}
 
+protected:
+	ExpressionCurveLenFunction() = default;
 	std::string serialize() const override;
 	void deserialize(std::istringstream& ss) override;
 private:

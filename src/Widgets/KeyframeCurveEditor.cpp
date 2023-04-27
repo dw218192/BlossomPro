@@ -122,9 +122,10 @@ void KeyframeCurveEditor::on_loadBtn_clicked() {
     auto const cw = m_ui.curveWidget;
     auto const lw = m_ui.savedCurveList;
     if (int const index = lw->currentRow(); index >= 0) {
-	    if (auto const pfunc = std::dynamic_pointer_cast<KeyframeCurveLenFunction>(
-		    UserCurveLenFunction::deserialize(m_savedCurves[index].toUtf8()))) {
-            auto const& func = *pfunc;
+        auto pfunc = UserCurveLenFunction::deserialize(m_savedCurves[index].toUtf8());
+        CHECK_RES_NO_RET(pfunc);
+	    if (auto const pkeyFrameFunc = std::dynamic_pointer_cast<KeyframeCurveLenFunction>(pfunc.value())) {
+            auto const& func = *pkeyFrameFunc;
             cw->setSplineType(func.getType());
             cw->setYScale(func.getScale());
             cw->setControlPoints(func.getControlPoints().cbegin(), func.getControlPoints().cend());
@@ -143,14 +144,16 @@ void KeyframeCurveEditor::on_deleteBtn_clicked() {
 
 void KeyframeCurveEditor::addSavedCurve(char const* serializedFunc, bool displayOnly) {
     auto const pfunc = UserCurveLenFunction::deserialize(serializedFunc);
-    addSavedCurve(*pfunc, displayOnly);
+    CHECK_RES_NO_RET(pfunc);
+    addSavedCurve(*pfunc.value(), displayOnly);
 }
 
 void KeyframeCurveEditor::addSavedCurve(UserCurveLenFunction const& func, bool displayOnly) {
     m_ui.savedCurveList->addItem(new QListWidgetItem{ getPreview(func),"" });
-    std::string const serialized = func.serialize();
+    auto const serialized = UserCurveLenFunction::serialize(func);
+    CHECK_RES_NO_RET(serialized);
 
     if (!displayOnly) {
-        m_savedCurves.push_back(QString::fromUtf8(serialized.c_str()));
+        m_savedCurves.push_back(QString::fromUtf8(serialized.value().asChar()));
     }
 }

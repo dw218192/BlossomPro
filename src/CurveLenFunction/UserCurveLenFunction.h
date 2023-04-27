@@ -2,6 +2,8 @@
 #include <maya/MStatus.h>
 #include <string>
 
+#include "Utils.h"
+
 /**
  * \brief
  * represents a user-defined function of curve length ratio\n
@@ -13,7 +15,8 @@
  */
 struct UserCurveLenFunction
 {
-	static std::shared_ptr<UserCurveLenFunction> deserialize(char const* raw);
+	static Result<std::shared_ptr<UserCurveLenFunction>> deserialize(char const* raw) noexcept;
+	static Result<MString> serialize(UserCurveLenFunction const& func) noexcept;
 
 	UserCurveLenFunction() = default;
 	virtual ~UserCurveLenFunction() = default;
@@ -25,9 +28,13 @@ struct UserCurveLenFunction
 	 */
 	virtual double operator()(double s) const = 0;
 	virtual bool operator==(UserCurveLenFunction const&) const = 0;
+	bool operator!=(UserCurveLenFunction const& other) const {
+		return !(*this == other);
+	}
 
 	virtual bool valid() const = 0;
-	virtual std::string serialize() const = 0;
 
+protected:
+	virtual std::string serialize() const = 0;
 	virtual void deserialize(std::istringstream&) = 0;
 };

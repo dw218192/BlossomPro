@@ -1,8 +1,8 @@
 #pragma once
+
 #include <maya/MStatus.h>
 #include <maya/MString.h>
 #include <maya/MGlobal.h>
-
 #include <exception>
 #include <variant>
 

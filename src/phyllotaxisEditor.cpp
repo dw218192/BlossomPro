@@ -258,7 +258,7 @@ void PhyllotaxisEditor::on_tabWidget_currentChanged(int index) {
     updateDensityFunc();
 }
 
-void PhyllotaxisEditor::on_keyframeCurveEditor_curveChanged() {
+void PhyllotaxisEditor::on_densityCurveEditor_curveChanged() {
     updateDensityFunc();
 }
 

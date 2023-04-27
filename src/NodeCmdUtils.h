@@ -181,19 +181,51 @@ namespace NodeCmdUtils {
         return shapeObj;
     }
 
-    struct MeshCreateResult {
+    struct CreateResult {
         MObject shape;
         MObject transform;
     };
-    [[nodiscard]] inline Result<MeshCreateResult> createEmptyMesh() noexcept {
+    [[nodiscard]] inline Result<CreateResult> createEmptyMesh() noexcept {
         MStatus status;
-        MeshCreateResult ret;
+        CreateResult ret;
         ret.transform = MFnTransform{}.create(MObject::kNullObj, &status);
         CHECK_RET(status);
 
         ret.shape = MFnMesh{}.create(0, 0, MPointArray{}, MIntArray{}, MIntArray{}, ret.transform, &status);
         CHECK_RET(status);
 
+        return ret;
+    }
+    [[nodiscard]] inline Result<CreateResult> createEmptyNurbs() noexcept {
+        MStatus status;
+        CreateResult ret;
+        ret.transform = MFnTransform{}.create(MObject::kNullObj, &status);
+        CHECK_RET(status);
+
+        MPoint const points[]{
+            {0, 1},
+            {0, 2},
+            {0, 3}
+        };
+        ret.shape = MFnNurbsCurve{}.createWithEditPoints(
+            MPointArray{ points, 3 }, 
+            3, MFnNurbsCurve::kOpen, true, true, true, 
+            ret.transform, &status);
+
+        CHECK_RET(status);
+
+        return ret;
+    }
+    [[nodiscard]] inline Result<MObject> createNode(char const* typeName) noexcept {
+        MStatus status;
+        MObject ret = MFnDependencyNode{}.create(typeName, &status);
+        CHECK_RET(status);
+    	return ret;
+    }
+    [[nodiscard]] inline Result<MObject> createNode(MTypeId typeId) noexcept {
+        MStatus status;
+        MObject ret = MFnDependencyNode{}.create(typeId, &status);
+        CHECK_RET(status);
         return ret;
     }
 };

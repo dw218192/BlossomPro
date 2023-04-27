@@ -5,8 +5,6 @@
 #include <maya/MIntArray.h>
 #include <maya/MFnIntArrayData.h>
 
-#include <glm/glm.hpp>
-#include <vector>
 
 class CurveInstanceNode : public MPxNode
 {

@@ -21,7 +21,7 @@ private:
     };
     void updateDensityFunc();
     MStatus updatePhyllotaxisNode();
-    MStatus createNetwork(MSelectionList const& selection);
+    MStatus createNetwork();
 
 private slots: //void on_<object name>_<signal name>(<signal parameters>);
     void on_expressionPlainTextEdit_textChanged();
@@ -30,9 +30,12 @@ private slots: //void on_<object name>_<signal name>(<signal parameters>);
     void on_createBtn_clicked();
     void on_mirrorCheckBox_stateChanged(int state);
     void on_numIterSpinBpx_valueChanged(int value);
+    void on_numPetalsSpinBox_valueChanged(int value);
     void on_integStepDoubleBox_valueChanged(double value);
     void on_tabWidget_currentChanged(int index);
     void on_keyframeCurveEditor_curveChanged();
+    void on_selectPhyCurveBtn_clicked();
+    void on_selecPetalMeshBtn_clicked();
 
 private:
     std::string m_densityFuncExpr;
@@ -42,12 +45,21 @@ private:
     Ui::PhyllotaxisEditor m_ui;
 
     struct Network {
+        // user selected
         MObject curveShape;
+        MObject petalTransform;
+
+        // automatically created
         MObject phyllotaxisNode;
         MObject polySphereNode;
-        MObject instancer;
+        MObject phyInstancer;
+        MObject petalInstancer;
         MObject meshShape;
         MObject meshTransform;
+        MObject makeCurveNode;
+        MObject circleCurveShape;
+        MObject circleCurveTransform;
+        MObject curveInstanceNode;
     };
     Network m_network;
 

@@ -131,13 +131,16 @@ MStatus BranchEditor::createNetwork(MSelectionList const& selection) {
     }
 
     if (m_network.meshObj.isNull()) {
-        m_network.meshObj = MFnMesh{}.create(0, 0, MPointArray{}, MIntArray{}, MIntArray{}, m_network.transformObj, &status);
+        auto meshRes = createEmptyMesh();
+        CHECK_RES(meshRes);
+
+        m_network.meshObj = meshRes.value().shape;
         CHECK_RET(status);
     }
 
-    Attribute loftOutput { m_network.loftNodeObj, "outputSurface" };
+    Attribute const loftOutput { m_network.loftNodeObj, "outputSurface" };
     Attribute const tessInput { m_network.tessNodeObj, "inputSurface" };
-    Attribute tessOutput{ m_network.tessNodeObj, "outputPolygon" };
+    Attribute const tessOutput{ m_network.tessNodeObj, "outputPolygon" };
     Attribute const meshInput{ m_network.meshObj, "inMesh" };
 
     status = loftOutput.connect(tessInput);

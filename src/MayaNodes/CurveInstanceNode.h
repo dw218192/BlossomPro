@@ -4,7 +4,7 @@
 #include <maya/MStatus.h>
 #include <maya/MIntArray.h>
 #include <maya/MFnIntArrayData.h>
-
+#include <maya/MRandom.h>
 
 class CurveInstanceNode : public MPxNode
 {
@@ -26,7 +26,11 @@ public:
 	static MObject inputCenter;
 	static MObject inputRotate;
 	
-	static MObject rotateAttenuation;
+	static MObject randSeed;
+	static MObject rotateMagnitude;
+	static MObject yRandMagnitude;
+	static MObject offsetRandMagnitude;
+	static MObject rotateRandMagnitude;
 
 	static MObject inputCurve;
 
@@ -37,3 +41,14 @@ public:
 	static  MStatus initialize();
 };
 
+class MyRand
+{
+public:
+	MyRand(unsigned long long seed)
+		:i(0), seed(seed)
+	{}
+	inline float Rand(float min, float max) { return MRandom::Rand_f(i++, seed, 0, max - min) + min; }
+protected:
+	unsigned long long i;
+	unsigned long long seed;
+};

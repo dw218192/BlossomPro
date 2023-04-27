@@ -19,9 +19,12 @@
 #include <maya/MQuaternion.h>
 #include <maya/MEulerRotation.h>
 #include <maya/MMatrix.h>
+#include <maya/MTime.h>
+
 
 #include <glm/glm.hpp>
 #include <format>
+#include <ctime>
 
 #define MAKE_INPUT(attr) //attr.setKeyable(true);\
                          //attr.setStorable(true);\
@@ -35,7 +38,12 @@
 
 MTypeId CurveInstanceNode::id(0x80002);
 MObject CurveInstanceNode::instanceCount;
-MObject CurveInstanceNode::rotateAttenuation;
+MObject CurveInstanceNode::rotateMagnitude;
+MObject CurveInstanceNode::randSeed;
+MObject CurveInstanceNode::yRandMagnitude;
+MObject CurveInstanceNode::offsetRandMagnitude;
+MObject CurveInstanceNode::rotateRandMagnitude;
+
 MObject CurveInstanceNode::inputCenter;
 MObject CurveInstanceNode::inputRotate;
 MObject CurveInstanceNode::inputCurve;
@@ -69,11 +77,35 @@ MStatus CurveInstanceNode::initialize()
     MAKE_INPUT(nAttr)
     addAttribute(CurveInstanceNode::instanceCount);
 
-    CurveInstanceNode::rotateAttenuation = nAttr.create("RotateAttenuation", "rattenuation", MFnNumericData::kFloat, 0.f);
-    nAttr.setMin(0.0);
-    nAttr.setMax(1.0);
+    CurveInstanceNode::rotateMagnitude = nAttr.create("RotateMagnitude", "rmagnitude", MFnNumericData::kFloat, 1.f);
+    nAttr.setMin(-1.0);
+    nAttr.setMax(2.0);
     MAKE_INPUT(nAttr)
-    addAttribute(CurveInstanceNode::rotateAttenuation);
+    addAttribute(CurveInstanceNode::rotateMagnitude);
+
+    CurveInstanceNode::yRandMagnitude = nAttr.create("YRandMagnitude", "yrand", MFnNumericData::kFloat, 0.f);
+    nAttr.setMin(0.f);
+    nAttr.setMax(5.f);
+    MAKE_INPUT(nAttr)
+    addAttribute(CurveInstanceNode::yRandMagnitude);
+
+    CurveInstanceNode::offsetRandMagnitude = nAttr.create("OffsetRandMagnitude", "offsetrand", MFnNumericData::kFloat, 0.f);
+    nAttr.setMin(0.f);
+    nAttr.setMax(2.f);
+    MAKE_INPUT(nAttr)
+    addAttribute(CurveInstanceNode::offsetRandMagnitude);
+
+    CurveInstanceNode::rotateRandMagnitude = nAttr.create("RotateRandMagnitude", "rotaterand", MFnNumericData::kFloat, 0.f);
+    nAttr.setMin(0.f);
+    nAttr.setMax(10.f);
+    MAKE_INPUT(nAttr)
+    addAttribute(CurveInstanceNode::rotateRandMagnitude);
+
+    unsigned long long seed = std::time(0);
+    CurveInstanceNode::randSeed = nAttr.create("RandSeed", "seed", MFnNumericData::kLong, seed);
+    nAttr.setMin(0);
+    MAKE_INPUT(nAttr)
+    addAttribute(CurveInstanceNode::randSeed);
 
     CurveInstanceNode::inputRotate = nAttr.create("InputRotate", "ir", MFnNumericData::k3Float);
     MAKE_INPUT(tAttr)
@@ -97,7 +129,11 @@ MStatus CurveInstanceNode::initialize()
     returnStatus = attributeAffects(CurveInstanceNode::inputCenter, CurveInstanceNode::outTransforms);
     returnStatus = attributeAffects(CurveInstanceNode::inputRotate, CurveInstanceNode::outTransforms);
     returnStatus = attributeAffects(CurveInstanceNode::instanceCount, CurveInstanceNode::outTransforms);
-    returnStatus = attributeAffects(CurveInstanceNode::rotateAttenuation, CurveInstanceNode::outTransforms);
+    returnStatus = attributeAffects(CurveInstanceNode::rotateMagnitude, CurveInstanceNode::outTransforms);
+    returnStatus = attributeAffects(CurveInstanceNode::randSeed, CurveInstanceNode::outTransforms);
+    returnStatus = attributeAffects(CurveInstanceNode::yRandMagnitude, CurveInstanceNode::outTransforms);
+    returnStatus = attributeAffects(CurveInstanceNode::offsetRandMagnitude, CurveInstanceNode::outTransforms);
+    returnStatus = attributeAffects(CurveInstanceNode::rotateRandMagnitude, CurveInstanceNode::outTransforms);
 
     return returnStatus;
 }
@@ -111,15 +147,23 @@ MStatus CurveInstanceNode::compute(const MPlug& plug, MDataBlock& data)
         int instanceCount = data.inputValue(CurveInstanceNode::instanceCount, &returnStatus).asInt();
         CHECK(returnStatus, returnStatus);
 
-        float rotate_attenuation = data.inputValue(CurveInstanceNode::rotateAttenuation, &returnStatus).asFloat();
+        float rotate_magnitude = data.inputValue(CurveInstanceNode::rotateMagnitude, &returnStatus).asFloat();
+        CHECK(returnStatus, returnStatus);
+
+        unsigned long long seed = data.inputValue(CurveInstanceNode::randSeed, &returnStatus).asLong();
+        CHECK(returnStatus, returnStatus);
+
+        float yrand_magnitude = data.inputValue(CurveInstanceNode::yRandMagnitude, &returnStatus).asFloat();
+        CHECK(returnStatus, returnStatus);
+
+        float offset_magnitude = data.inputValue(CurveInstanceNode::offsetRandMagnitude, &returnStatus).asFloat();
+        CHECK(returnStatus, returnStatus);
+
+        float rrand_magnitude = data.inputValue(CurveInstanceNode::rotateRandMagnitude, &returnStatus).asFloat();
         CHECK(returnStatus, returnStatus);
 
         float3& rotate = data.inputValue(CurveInstanceNode::inputRotate, &returnStatus).asFloat3();
         CHECK(returnStatus, returnStatus);
-
-        std::string temp = "rotate: [{}, {}, {}]";
-        MString info = std::vformat(temp, std::make_format_args(rotate[0], rotate[1], rotate[2])).c_str();
-        MGlobal::displayInfo(info);
 
         float3& c = data.inputValue(CurveInstanceNode::inputCenter, &returnStatus).asFloat3();
         CHECK(returnStatus, returnStatus);
@@ -140,8 +184,6 @@ MStatus CurveInstanceNode::compute(const MPlug& plug, MDataBlock& data)
 
         MVectorArray positions = arrayAttrsData.vectorArray("position", &returnStatus);
         CHECK(returnStatus, returnStatus);
-        MVectorArray scales = arrayAttrsData.vectorArray("scale", &returnStatus);
-        CHECK(returnStatus, returnStatus);
         MVectorArray rotations = arrayAttrsData.vectorArray("rotation", &returnStatus);
         CHECK(returnStatus, returnStatus);
 
@@ -149,20 +191,30 @@ MStatus CurveInstanceNode::compute(const MPlug& plug, MDataBlock& data)
 
         MVector baseVec(1, 0, 0);
 
+        MyRand rng(seed);
+
         for (int i = 0; i < instanceCount; ++i)
         {
-            MVector point = curveInfo->getPoint(Lerp<float>(0.f, length, static_cast<float>(i) / static_cast<float>(instanceCount - 1)));
+            float t = i + rng.Rand(-offset_magnitude, offset_magnitude);
+            float m = instanceCount;
+            t = glm::mod(glm::mod(t, m) + m, m);
+
+            MVector point = curveInfo->getPoint(Lerp<float>(0.f, length, static_cast<float>(t) / static_cast<float>(instanceCount)));
+            point.y += rng.Rand(-yrand_magnitude, yrand_magnitude);
             positions.append(point);
 
             // make the instanced object toward the center
             MVector dir = center - point;
-            
+            dir.y = 0.f;
+
             MEulerRotation inv_obj_rotate(toRadians(rotate[0]), toRadians(rotate[1]), toRadians(rotate[2]));
             inv_obj_rotate = inv_obj_rotate.inverse();
 
             MQuaternion toward_center = baseVec.rotateTo(dir);
 
-            MEulerRotation obj_rotate(toRadians(rotate[0]), toRadians(rotate[1]), (1.f - rotate_attenuation) * toRadians(rotate[2]));
+            MEulerRotation obj_rotate(toRadians(rotate[0] + rng.Rand(-rrand_magnitude, rrand_magnitude)), 
+                                      toRadians(rotate[1] + rng.Rand(-rrand_magnitude, rrand_magnitude)), 
+                                      rotate_magnitude * toRadians(rotate[2] + rng.Rand(-rrand_magnitude, rrand_magnitude)));
 
             MEulerRotation result;
             result = obj_rotate.asMatrix() * inv_obj_rotate.asMatrix() * toward_center.asMatrix();

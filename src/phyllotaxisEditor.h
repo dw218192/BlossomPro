@@ -33,7 +33,7 @@ private slots: //void on_<object name>_<signal name>(<signal parameters>);
     void on_numPetalsSpinBox_valueChanged(int value);
     void on_integStepDoubleBox_valueChanged(double value);
     void on_tabWidget_currentChanged(int index);
-    void on_keyframeCurveEditor_curveChanged();
+    void on_densityCurveEditor_curveChanged();
     void on_selectPhyCurveBtn_clicked();
     void on_selecPetalMeshBtn_clicked();
 

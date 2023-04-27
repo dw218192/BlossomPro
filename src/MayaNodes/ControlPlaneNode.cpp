@@ -101,9 +101,9 @@ void ControlPlaneNode::ConnectVertices(const int& row, const int& column, MIntAr
         {
             faceCounts.append(4);
             faceConnects.append(Index(column + 1, w - 1, h - 1));
-            faceConnects.append(Index(column + 1, w - 1, h));
-            faceConnects.append(Index(column + 1, w, h));
             faceConnects.append(Index(column + 1, w, h - 1));
+            faceConnects.append(Index(column + 1, w, h));
+            faceConnects.append(Index(column + 1, w - 1, h));
         }
     }
 }

@@ -27,6 +27,8 @@ public:
 								 MItMeshVertex& vertexIter,
 								 std::vector<std::vector<glm::vec3>>& controlPoints);
 
+	static void ConnectVertices(const int& row, const int& column, MIntArray& faceCounts, MIntArray& faceConnects);
+
 protected:
 	void UpdateVertices(int rowCount, 
 						int columnCount, 
@@ -36,7 +38,7 @@ protected:
 						MPointArray& points);
 
 protected:
-	static void ConnectVertices(const int& row, const int& column, MIntArray& faceCounts, MIntArray& faceConnects);
+	
 	static void InitPlane(const int& defaultRc, const int& defaultCc, MPointArray& points, MStatus& stat);
 	static void Init(const int& defaultRc, const int& defaultCc, MObject& outData, MStatus& stat);
 

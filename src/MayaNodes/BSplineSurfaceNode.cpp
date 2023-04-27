@@ -182,21 +182,14 @@ void BSplineSurfaceNode::MakeMesh(std::vector<std::vector<glm::vec3>>& controlPo
         for (int h = 1; h <= subdivisionHeight; ++h)
         {
             faceConnects.append(Index(subdivisionHeight + 1, w - 1, h - 1));
-            faceConnects.append(Index(subdivisionHeight + 1, w - 1, h));
-            faceConnects.append(Index(subdivisionHeight + 1, w, h));
             faceConnects.append(Index(subdivisionHeight + 1, w, h - 1));
+            faceConnects.append(Index(subdivisionHeight + 1, w, h));
+            faceConnects.append(Index(subdivisionHeight + 1, w - 1, h));
+
             faceCounts.append(4);
         }
     }
     
     MObject newMesh = MFnMesh().create(points.length(), faceCounts.length(), points, faceCounts, faceConnects, meshData, &status);
     MFnMesh mFnMesh{ newMesh };
-
-    MFloatVectorArray normals;
-    mFnMesh.getNormals(normals);
-
-    for(auto&& normal : normals) {
-        normal = -normal;
-    }
-    mFnMesh.setNormals(normals);
 }

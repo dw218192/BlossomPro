@@ -154,7 +154,7 @@ MStatus BranchEditor::createNetwork(MSelectionList const& selection) {
     CHECK_RET(status);
 
     // populate the input attributes of the loft node
-    status = updateNetwork(m_network, CURVE_1 | CURVE_2 | CURVE_3 | CURVE_4 | CURVE_5);
+    status = updateNetwork(CURVE_1 | CURVE_2 | CURVE_3 | CURVE_4 | CURVE_5);
     CHECK_RET(status);
 
     return status;
@@ -168,8 +168,8 @@ BranchEditor::~BranchEditor() {
 	
 }
 
-MStatus BranchEditor::updateNetwork(BranchNodeNetwork const& network, unsigned char flags) {
-    if(network.loftNodeObj.isNull()) {
+MStatus BranchEditor::updateNetwork(unsigned char flags) {
+    if(m_network.loftNodeObj.isNull()) {
         return MStatus::kSuccess;
     }
 
@@ -227,6 +227,24 @@ MStatus BranchEditor::updateNetwork(BranchNodeNetwork const& network, unsigned c
         CHECK_RET(status);
     }
 
+    // put the flower head
+    if (!grammar.result().empty() && !m_network.flowerHeadTransform.isNull()) {
+        auto const& [pos, rot, ignore] = grammar.result().back();
+
+        MVector offset{
+            m_ui.FHeadOffsetXDblBox->value(),
+            m_ui.FHeadOffsetYDblBox->value(),
+            m_ui.FHeadOffsetZDblBox->value(),
+        };
+
+        MFnTransform transformFn{ m_network.flowerHeadTransform };
+        status = transformFn.setTranslation(pos + offset, MSpace::kTransform);
+        CHECK_RET(status);
+
+        status = transformFn.setRotation(rot);
+        CHECK_RET(status);
+    }
+
     return MStatus::kSuccess;
 }
 void BranchEditor::on_createBtn_clicked() {
@@ -242,71 +260,106 @@ void BranchEditor::on_createBtn_clicked() {
     }
 }
 
+void BranchEditor::on_selectFlowerHeadBtn_clicked() {
+    MSelectionList selection;
+    MStatus status = MGlobal::getActiveSelectionList(selection);
+    CHECK_NO_RET(status);
+    if (selection.length() == 1) {
+        MObject transform;
+        status = selection.getDependNode(0, transform);
+        CHECK_NO_RET(status);
+
+        auto name = getName(transform);
+        CHECK_RES_NO_RET(name);
+
+        m_network.flowerHeadTransform = transform;
+        m_ui.selectFlowerHeadLbl->setText(MQtUtil::toQString(name.value()));
+    }
+    else {
+        MGlobal::displayError("Please Select exactly one object to represent the flower head");
+    }
+}
+
 void BranchEditor::on_numStepsSpinBox_valueChanged([[maybe_unused]] int value) {
-	MStatus const status = updateNetwork(m_network, 0);
+	MStatus const status = updateNetwork(0);
     CHECK_NO_RET(status);
 }
 void BranchEditor::on_lengthDoubleBox_valueChanged([[maybe_unused]] double value) {
-    MStatus const status = updateNetwork(m_network, 0);
+    MStatus const status = updateNetwork(0);
+    CHECK_NO_RET(status);
+}
+
+void BranchEditor::on_FHeadOffsetXDblBox_valueChanged([[maybe_unused]] double value) {
+    MStatus const status = updateNetwork(0);
+    CHECK_NO_RET(status);
+}
+
+void BranchEditor::on_FHeadOffsetYDblBox_valueChanged([[maybe_unused]] double value) {
+    MStatus const status = updateNetwork(0);
+    CHECK_NO_RET(status);
+}
+
+void BranchEditor::on_FHeadOffsetZDblBox_valueChanged([[maybe_unused]] double value) {
+    MStatus const status = updateNetwork(0);
     CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_keyframeCurveEditor_1_curveChanged() {
 	if (m_ui.radioButton_1->isChecked()) {
-		MStatus const status = updateNetwork(m_network, CURVE_1);
+		MStatus const status = updateNetwork(CURVE_1);
 		CHECK_NO_RET(status);
 	}
 }
 
 void BranchEditor::on_keyframeCurveEditor_2_curveChanged() {
 	if (m_ui.radioButton_2->isChecked()) {
-		MStatus const status = updateNetwork(m_network, CURVE_2);
+		MStatus const status = updateNetwork(CURVE_2);
 		CHECK_NO_RET(status);
 	}
 }
 
 void BranchEditor::on_keyframeCurveEditor_3_curveChanged() {
 	if (m_ui.radioButton_3->isChecked()) {
-		MStatus const status = updateNetwork(m_network, CURVE_3);
+		MStatus const status = updateNetwork(CURVE_3);
 		CHECK_NO_RET(status);
 	}
 }
 
 void BranchEditor::on_keyframeCurveEditor_4_curveChanged() {
 	if (m_ui.radioButton_4->isChecked()) {
-		MStatus const status = updateNetwork(m_network, CURVE_4);
+		MStatus const status = updateNetwork(CURVE_4);
 		CHECK_NO_RET(status);
 	}
 }
 
 void BranchEditor::on_keyframeCurveEditor_5_curveChanged() {
 	if (m_ui.radioButton_5->isChecked()) {
-		MStatus const status = updateNetwork(m_network, CURVE_5);
+		MStatus const status = updateNetwork(CURVE_5);
 		CHECK_NO_RET(status);
 	}
 }
 
 void BranchEditor::on_radioButton_1_toggled([[maybe_unused]] bool checked) {
-    MStatus const status = updateNetwork(m_network, CURVE_1);
+    MStatus const status = updateNetwork(CURVE_1);
     CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_radioButton_2_toggled([[maybe_unused]] bool checked) {
-    MStatus const status = updateNetwork(m_network, CURVE_2);
+    MStatus const status = updateNetwork(CURVE_2);
     CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_radioButton_3_toggled([[maybe_unused]] bool checked) {
-    MStatus const status = updateNetwork(m_network, CURVE_3);
+    MStatus const status = updateNetwork(CURVE_3);
     CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_radioButton_4_toggled([[maybe_unused]] bool checked) {
-    MStatus const status = updateNetwork(m_network, CURVE_4);
+    MStatus const status = updateNetwork(CURVE_4);
     CHECK_NO_RET(status);
 }
 
 void BranchEditor::on_radioButton_5_toggled([[maybe_unused]] bool checked) {
-    MStatus const status = updateNetwork(m_network, CURVE_5);
+    MStatus const status = updateNetwork(CURVE_5);
     CHECK_NO_RET(status);
 }

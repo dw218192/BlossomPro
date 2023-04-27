@@ -27,9 +27,12 @@ private:
     };
 
     struct BranchNodeNetwork {
+        // user provided
         MObject generatingCurve;
         MObject generatingCurveShape;
+        MObject flowerHeadTransform;
 
+        // automatically generated
         MObject loftNodeObj, tessNodeObj, transformObj, meshObj;
     };
 
@@ -45,12 +48,16 @@ private:
     MStatus popLoftCurve();
     Inputs getInputs(unsigned char flags) const;
     MStatus createNetwork(MSelectionList const& selection);
-    MStatus updateNetwork(BranchNodeNetwork const& network, unsigned char flags);
+    MStatus updateNetwork(unsigned char flags);
 
 private slots:
     void on_createBtn_clicked();
+    void on_selectFlowerHeadBtn_clicked();
     void on_numStepsSpinBox_valueChanged(int value);
     void on_lengthDoubleBox_valueChanged(double value);
+    void on_FHeadOffsetXDblBox_valueChanged(double value);
+    void on_FHeadOffsetYDblBox_valueChanged(double value);
+    void on_FHeadOffsetZDblBox_valueChanged(double value);
     void on_keyframeCurveEditor_1_curveChanged();
     void on_keyframeCurveEditor_2_curveChanged();
     void on_keyframeCurveEditor_3_curveChanged();

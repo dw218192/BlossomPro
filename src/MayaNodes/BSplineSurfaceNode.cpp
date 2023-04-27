@@ -190,4 +190,13 @@ void BSplineSurfaceNode::MakeMesh(std::vector<std::vector<glm::vec3>>& controlPo
     }
     
     MObject newMesh = MFnMesh().create(points.length(), faceCounts.length(), points, faceCounts, faceConnects, meshData, &status);
+    MFnMesh mFnMesh{ newMesh };
+
+    MFloatVectorArray normals;
+    mFnMesh.getNormals(normals);
+
+    for(auto&& normal : normals) {
+        normal = -normal;
+    }
+    mFnMesh.setNormals(normals);
 }

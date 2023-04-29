@@ -28,6 +28,7 @@ public:
 	
 	static MObject randSeed;
 	static MObject rotateMagnitude;
+	static MObject scaleMagnitude;
 	static MObject yRandMagnitude;
 	static MObject offsetRandMagnitude;
 	static MObject rotateRandMagnitude;

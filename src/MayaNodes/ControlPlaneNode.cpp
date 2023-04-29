@@ -109,10 +109,10 @@ void ControlPlaneNode::ConnectVertices(const int& row, const int& column, MIntAr
 }
 void ControlPlaneNode::InitPlane(const int& defaultRc, const int& defaultCc, MPointArray& points, MStatus& stat)
 {
-    glm::vec3 pMin(-1.f, 0.f, -1.f);
-    glm::vec3 pMax(1.f, 0.f, 1.f);
-    pMin.x += -2.f;
-    pMax.x += -2.f;
+    glm::vec3 pMin(0.f,  1.f, -1.f);
+    glm::vec3 pMax(0.f, -1.f,  1.f);
+    pMin.y += 2.f;
+    pMax.y += 2.f;
 
     // add points
     int vertexR = 2 * defaultRc + 1;
@@ -121,12 +121,13 @@ void ControlPlaneNode::InitPlane(const int& defaultRc, const int& defaultCc, MPo
     {
         for (int c = 0; c <= defaultCc; ++c)
         {
-            glm::vec3 p = glm::mix(pMin, pMax, glm::vec3(static_cast<float>(c) / static_cast<float>(defaultCc), 0.f, static_cast<float>(r) / static_cast<float>(2 * defaultRc)));
+            glm::vec3 p = glm::mix(pMin, pMax, glm::vec3(0.f, static_cast<float>(c) / static_cast<float>(defaultCc), static_cast<float>(r) / static_cast<float>(2 * defaultRc)));
             MPoint point = MPoint(p.x, p.y, p.z);
             points.append(point);
         }
     }
-    glm::vec3 root(pMax.x + 0.5 * (pMax - pMin).x, 0.f, 0.5 * (pMax + pMin).z);
+    
+    glm::vec3 root(0.f);
     points.append(MPoint(root.x, root.y, root.z));
 }
 void ControlPlaneNode::Init(const int& defaultRc, const int& defaultCc, MObject& outData, MStatus& stat)

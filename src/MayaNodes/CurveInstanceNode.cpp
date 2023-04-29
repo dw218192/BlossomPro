@@ -39,6 +39,7 @@
 MTypeId CurveInstanceNode::id(0x80002);
 MObject CurveInstanceNode::instanceCount;
 MObject CurveInstanceNode::rotateMagnitude;
+MObject CurveInstanceNode::scaleMagnitude;
 MObject CurveInstanceNode::randSeed;
 MObject CurveInstanceNode::yRandMagnitude;
 MObject CurveInstanceNode::offsetRandMagnitude;
@@ -82,6 +83,12 @@ MStatus CurveInstanceNode::initialize()
     nAttr.setMax(2.0);
     MAKE_INPUT(nAttr)
     addAttribute(CurveInstanceNode::rotateMagnitude);
+
+    CurveInstanceNode::scaleMagnitude = nAttr.create("ScaleMagnitude", "smagnitude", MFnNumericData::kFloat, 1.f);
+    nAttr.setMin(0.1f);
+    nAttr.setMax(2.0);
+    MAKE_INPUT(nAttr)
+    addAttribute(CurveInstanceNode::scaleMagnitude);
 
     CurveInstanceNode::yRandMagnitude = nAttr.create("YRandMagnitude", "yrand", MFnNumericData::kFloat, 0.f);
     nAttr.setMin(0.f);
@@ -130,6 +137,7 @@ MStatus CurveInstanceNode::initialize()
     returnStatus = attributeAffects(CurveInstanceNode::inputRotate, CurveInstanceNode::outTransforms);
     returnStatus = attributeAffects(CurveInstanceNode::instanceCount, CurveInstanceNode::outTransforms);
     returnStatus = attributeAffects(CurveInstanceNode::rotateMagnitude, CurveInstanceNode::outTransforms);
+    returnStatus = attributeAffects(CurveInstanceNode::scaleMagnitude, CurveInstanceNode::outTransforms);
     returnStatus = attributeAffects(CurveInstanceNode::randSeed, CurveInstanceNode::outTransforms);
     returnStatus = attributeAffects(CurveInstanceNode::yRandMagnitude, CurveInstanceNode::outTransforms);
     returnStatus = attributeAffects(CurveInstanceNode::offsetRandMagnitude, CurveInstanceNode::outTransforms);
@@ -148,6 +156,9 @@ MStatus CurveInstanceNode::compute(const MPlug& plug, MDataBlock& data)
         CHECK(returnStatus, returnStatus);
 
         float rotate_magnitude = data.inputValue(CurveInstanceNode::rotateMagnitude, &returnStatus).asFloat();
+        CHECK(returnStatus, returnStatus);
+
+        float scale_magnitude = data.inputValue(CurveInstanceNode::scaleMagnitude, &returnStatus).asFloat();
         CHECK(returnStatus, returnStatus);
 
         unsigned long long seed = data.inputValue(CurveInstanceNode::randSeed, &returnStatus).asLong();
@@ -183,6 +194,8 @@ MStatus CurveInstanceNode::compute(const MPlug& plug, MDataBlock& data)
         CHECK(returnStatus, returnStatus);
 
         MVectorArray positions = arrayAttrsData.vectorArray("position", &returnStatus);
+        CHECK(returnStatus, returnStatus);
+        MVectorArray scales = arrayAttrsData.vectorArray("scale", &returnStatus);
         CHECK(returnStatus, returnStatus);
         MVectorArray rotations = arrayAttrsData.vectorArray("rotation", &returnStatus);
         CHECK(returnStatus, returnStatus);
@@ -225,6 +238,8 @@ MStatus CurveInstanceNode::compute(const MPlug& plug, MDataBlock& data)
             rv.z = toDegree(result.z);
             
             rotations.append(rv);
+            MVector s(scale_magnitude, scale_magnitude, scale_magnitude);
+            scales.append(s);
         }
 
         data.outputValue(CurveInstanceNode::outTransforms).set(aadObj);

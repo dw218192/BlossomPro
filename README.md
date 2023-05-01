@@ -8,6 +8,7 @@ It is a toolset that consists of the following editors:
 4. Curve Instance Editor (general-purpose; for duplicating objects along any arbitrary curves)
 
 A typical workflow would look like this:
+
 ![](./imgs/workflow.png)
 
 The techniques we implement are mainly based on the following SIGGRAPH Papers:
@@ -18,8 +19,8 @@ The techniques we implement are mainly based on the following SIGGRAPH Papers:
 ## Note
 This project is still under active development, even though the basic features are complete. 
 
-# Short Presentation
-
+# Presentation & Demo
+https://user-images.githubusercontent.com/31294154/235478257-c9437665-3434-4a03-aa7a-cc2fec4dc7bc.mp4
 
 # How to Build
 To build this project, we recommend using CMake.

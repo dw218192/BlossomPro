@@ -35,6 +35,7 @@ Before building the project, please ensure that you have the following dependenc
 1. CMake (version 3.0 or higher)
 2. C++ compiler (GCC, Clang, or Visual Studio)
 3. Maya SDK (2023 or above)
+4. Qt5 framework
 
 ## Installing the Maya SDK
 1. download the [Maya SDK](https://autodesk-adn-transfer.s3-us-west-2.amazonaws.com/ADN+Extranet/M%26E/Maya/devkit+2023/Autodesk_Maya_2023_3_Update_DEVKIT_Windows.zip) 

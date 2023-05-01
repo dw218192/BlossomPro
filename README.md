@@ -17,7 +17,11 @@ The techniques we implement are mainly based on the following SIGGRAPH Papers:
 2. [Modeling Dense Inflorescences](http://algorithmicbotany.org/papers/inflorescence.sig16.html) (SIGGRAPH '16) 
 
 ## Note
-This project is still under active development, even though the basic features are complete. 
+This project is still under active development, even though the basic features are complete. There are lots of issues with scene loading & saving, and there is generally no error checking for user input.
+
+# Showcase
+![](./imgs/1.jpg)
+![](./imgs/2.jpg)
 
 # Presentation & Demo
 https://user-images.githubusercontent.com/31294154/235478257-c9437665-3434-4a03-aa7a-cc2fec4dc7bc.mp4

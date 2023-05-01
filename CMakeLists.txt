@@ -58,14 +58,6 @@ file(GLOB SOURCE_FILES ${SOURCE_FILES}
 
 # test app srcs
 file(GLOB EXPRESSION_TEST_SRCS "src/TestExpressionParser/*.cpp")
-file(GLOB WIDGET_TEST_SRCS 
-	"src/TestWidgets/*.h"
-	"src/TestWidgets/*.cpp"
-	"src/Widgets/*.h"
-	"src/Widgets/*.cpp"
-	"src/CurveLenFunction/*.h"
-	"src/CurveLenFunction/*.cpp")
-
 file(GLOB BSPLINE_SURF_TEST_SRCS "src/TestBSplineSurface/*.cpp")
 
 # our libs
@@ -94,22 +86,6 @@ target_link_libraries(ExpressionParserTest
 	PRIVATE
 		ExpressionParser
 )
-
-add_executable(WidgetTest ${WIDGET_TEST_SRCS})
-target_include_directories(WidgetTest
-	PRIVATE
-		${GLM_INCLUDE}
-		${PROJECT_SOURCE_DIR}/include
-		${SRC_ROOT}
-)
-target_link_libraries(WidgetTest
-	PRIVATE
-		OpenGL::GL
-		ExpressionParser
-		Qt5::Widgets Qt5::Gui Qt5::OpenGL Qt5::Core
-		libspline
-)
-
 
 # test BSplineSurface
 # set vars for freeglut
